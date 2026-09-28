@@ -1,0 +1,300 @@
+/* =========================================================
+   kyushu-kenshu-2026 — atmosphere.css
+   天気・時間帯連動レイヤー（reitansai atmosphere を九州研修向けに移植）
+   ========================================================= */
+
+.rt-atmosphere {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+  transition: opacity 1.4s ease, filter 2s ease;
+}
+.rt-atmosphere::before,
+.rt-atmosphere::after {
+  content: '';
+  position: absolute;
+  inset: -15%;
+  transition: opacity 1.8s ease, background 1.8s ease, filter 1.8s ease, transform 2.2s ease;
+}
+.rt-atmosphere::before {
+  background: radial-gradient(ellipse 80% 50% at 50% -10%, var(--rt-glow), transparent 55%);
+  opacity: 1;
+}
+.rt-atmosphere::after { opacity: 0; }
+
+/* Clear day */
+.rt-atmosphere.wx-clear.day::before {
+  background:
+    radial-gradient(ellipse 110% 75% at 78% -12%, rgba(255,210,90,.55), transparent 42%),
+    radial-gradient(ellipse 50% 40% at 12% 95%, rgba(70,170,255,.22), transparent 50%),
+    radial-gradient(circle at 32% 18%, rgba(255,255,210,.18), transparent 28%);
+  animation: sunPulse 7s ease-in-out infinite;
+}
+.rt-atmosphere.wx-clear.day::after {
+  opacity: .55;
+  background: conic-gradient(from 0deg at 78% -5%, transparent 0deg, rgba(255,220,120,.08) 8deg, transparent 16deg, rgba(255,230,140,.06) 24deg, transparent 32deg, rgba(255,210,100,.1) 40deg, transparent 50deg);
+  animation: sunRays 48s linear infinite;
+  filter: blur(1px);
+}
+@keyframes sunPulse {
+  0%,100% { filter: brightness(1) saturate(1); }
+  50% { filter: brightness(1.18) saturate(1.22); }
+}
+@keyframes sunRays {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Clear night */
+.rt-atmosphere.wx-clear.night::before {
+  background:
+    radial-gradient(ellipse 70% 50% at 82% 6%, rgba(150,180,255,.32), transparent 48%),
+    radial-gradient(circle at 16% 26%, rgba(255,255,235,.16), transparent 18%),
+    radial-gradient(circle at 58% 12%, rgba(255,255,255,.1), transparent 6%);
+}
+.rt-atmosphere.wx-clear.night::after {
+  opacity: .95;
+  background-image:
+    radial-gradient(1.5px 1.5px at 8% 12%, rgba(255,255,255,.95), transparent),
+    radial-gradient(1px 1px at 22% 28%, rgba(255,255,255,.7), transparent),
+    radial-gradient(2px 2px at 35% 8%, rgba(255,255,255,.9), transparent),
+    radial-gradient(1px 1px at 48% 35%, rgba(220,230,255,.65), transparent),
+    radial-gradient(1.5px 1.5px at 62% 18%, rgba(255,255,255,.85), transparent),
+    radial-gradient(1px 1px at 75% 42%, rgba(255,255,255,.6), transparent),
+    radial-gradient(2px 2px at 88% 15%, rgba(255,255,255,.9), transparent),
+    radial-gradient(1px 1px at 12% 55%, rgba(200,220,255,.55), transparent),
+    radial-gradient(1.5px 1.5px at 28% 68%, rgba(255,255,255,.75), transparent),
+    radial-gradient(1px 1px at 52% 72%, rgba(255,255,255,.5), transparent);
+  background-size: 100% 100%;
+  animation: starTwinkle 4.5s ease-in-out infinite alternate;
+}
+@keyframes starTwinkle {
+  0% { opacity: .75; filter: brightness(.9); }
+  50% { opacity: 1; filter: brightness(1.15); }
+  100% { opacity: .85; filter: brightness(1); }
+}
+
+/* Partly / Cloudy */
+.rt-atmosphere.wx-partly::before {
+  background:
+    radial-gradient(ellipse 100% 55% at 25% -8%, rgba(140,160,190,.28), transparent 55%),
+    radial-gradient(ellipse 70% 40% at 75% 5%, rgba(120,140,170,.22), transparent 50%);
+  filter: blur(2.5px) saturate(.85);
+}
+.rt-atmosphere.wx-partly.day::before {
+  background:
+    radial-gradient(ellipse 95% 58% at 72% -8%, rgba(255,215,140,.28), transparent 42%),
+    radial-gradient(ellipse 110% 48% at 28% 0%, rgba(150,170,200,.26), transparent 55%);
+  filter: blur(2px);
+  animation: cloudDrift 40s ease-in-out infinite alternate;
+}
+.rt-atmosphere.wx-partly::after {
+  opacity: .4;
+  background:
+    radial-gradient(ellipse 80% 35% at 60% 15%, rgba(180,195,220,.25), transparent 60%);
+  filter: blur(8px);
+  animation: cloudDrift2 55s ease-in-out infinite alternate;
+}
+@keyframes cloudDrift {
+  from { transform: translateX(-4%) translateY(0); }
+  to { transform: translateX(5%) translateY(2%); }
+}
+@keyframes cloudDrift2 {
+  from { transform: translateX(3%) translateY(1%); }
+  to { transform: translateX(-6%) translateY(-1%); }
+}
+
+.rt-atmosphere.wx-cloudy::before {
+  background:
+    radial-gradient(ellipse 130% 55% at 30% -5%, rgba(110,130,160,.42), transparent 52%),
+    radial-gradient(ellipse 90% 45% at 85% 8%, rgba(90,110,140,.32), transparent 50%);
+  filter: blur(4px) saturate(.65);
+  animation: cloudDrift 50s ease-in-out infinite alternate;
+}
+.rt-atmosphere.wx-cloudy::after {
+  opacity: .5;
+  background: radial-gradient(ellipse 100% 40% at 55% 10%, rgba(130,145,170,.3), transparent 55%);
+  filter: blur(10px);
+  animation: cloudDrift2 65s ease-in-out infinite alternate;
+}
+
+/* Fog */
+.rt-atmosphere.wx-fog::before {
+  background: linear-gradient(180deg, rgba(200,210,225,.48) 0%, rgba(185,195,210,.28) 30%, rgba(170,180,195,.12) 55%, transparent 80%);
+  filter: blur(18px);
+}
+.rt-atmosphere.wx-fog::after {
+  opacity: .7;
+  background:
+    repeating-linear-gradient(0deg, transparent, transparent 28px, rgba(255,255,255,.05) 28px, rgba(255,255,255,.05) 56px),
+    repeating-linear-gradient(90deg, transparent, transparent 60px, rgba(255,255,255,.03) 60px, rgba(255,255,255,.03) 120px);
+  animation: fogDrift 32s linear infinite;
+}
+@keyframes fogDrift {
+  to { transform: translateX(-12%) translateY(2%); }
+}
+
+/* Rain */
+.rt-atmosphere.wx-rain::before,
+.rt-atmosphere.wx-rain-heavy::before {
+  background:
+    radial-gradient(ellipse 110% 65% at 50% -12%, rgba(40,90,170,.42), transparent 52%),
+    linear-gradient(180deg, rgba(15,35,70,.22), transparent 45%);
+}
+.rt-atmosphere.wx-rain::after {
+  opacity: .78;
+  background:
+    repeating-linear-gradient(108deg, transparent 0, transparent 4px, rgba(140,180,255,.16) 5px, transparent 7px),
+    repeating-linear-gradient(102deg, transparent 0, transparent 6px, rgba(160,200,255,.1) 7px, transparent 10px);
+  background-size: 16px 32px, 22px 40px;
+  animation: rainFall .42s linear infinite;
+}
+.rt-atmosphere.wx-rain-heavy::after {
+  opacity: .92;
+  background:
+    repeating-linear-gradient(110deg, transparent 0, transparent 3px, rgba(150,185,255,.22) 4px, transparent 6px),
+    repeating-linear-gradient(104deg, transparent 0, transparent 5px, rgba(170,200,255,.14) 6px, transparent 9px);
+  background-size: 11px 20px, 18px 28px;
+  animation: rainFall .26s linear infinite;
+}
+@keyframes rainFall {
+  to { transform: translateY(36px) translateX(4px); }
+}
+
+/* Snow */
+.rt-atmosphere.wx-snow::before {
+  background:
+    radial-gradient(ellipse 110% 55% at 50% -5%, rgba(200,220,255,.35), transparent 52%),
+    linear-gradient(180deg, rgba(220,230,245,.12), transparent 40%);
+}
+.rt-atmosphere.wx-snow::after {
+  opacity: .95;
+  background-image:
+    radial-gradient(3px 3px at 12% 15%, rgba(255,255,255,.95), transparent),
+    radial-gradient(2px 2px at 28% 42%, rgba(255,255,255,.8), transparent),
+    radial-gradient(2.5px 2.5px at 45% 8%, rgba(255,255,255,.9), transparent),
+    radial-gradient(1.5px 1.5px at 62% 55%, rgba(255,255,255,.7), transparent),
+    radial-gradient(3px 3px at 78% 22%, rgba(255,255,255,.85), transparent),
+    radial-gradient(2px 2px at 88% 68%, rgba(255,255,255,.75), transparent);
+  background-size: 240px 240px, 180px 180px, 200px 200px, 160px 160px, 220px 220px, 170px 170px;
+  animation: snowFall 14s linear infinite;
+}
+@keyframes snowFall {
+  0% { transform: translateY(0) translateX(0); }
+  100% { transform: translateY(240px) translateX(50px); }
+}
+
+/* Storm */
+.rt-atmosphere.wx-storm::before {
+  background:
+    radial-gradient(ellipse 110% 75% at 35% -18%, rgba(90,50,190,.5), transparent 48%),
+    radial-gradient(ellipse 70% 45% at 92% 18%, rgba(50,90,255,.32), transparent 42%);
+  animation: stormFlash 6.5s ease-in-out infinite;
+}
+.rt-atmosphere.wx-storm::after {
+  opacity: .88;
+  background:
+    repeating-linear-gradient(112deg, transparent 0, transparent 3px, rgba(180,160,255,.22) 4px, transparent 6px),
+    repeating-linear-gradient(105deg, transparent 0, transparent 5px, rgba(160,180,255,.14) 6px, transparent 9px);
+  background-size: 10px 18px, 16px 26px;
+  animation: rainFall .2s linear infinite;
+}
+@keyframes stormFlash {
+  0%,86%,100% { filter: brightness(1) saturate(1); }
+  88% { filter: brightness(2.1) saturate(1.6); }
+  89% { filter: brightness(.7) saturate(1.2); }
+  91% { filter: brightness(1.9) saturate(1.5); }
+  93% { filter: brightness(.85); }
+  95% { filter: brightness(1.5) saturate(1.3); }
+  97% { filter: brightness(1); }
+}
+
+/* 時間帯 body オーバーレイ（reitansai同様） */
+html[data-period="dawn"] body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 95% 58% at 50% -18%, rgba(255,140,55,.38), transparent 48%),
+    radial-gradient(ellipse 55% 42% at 92% 82%, rgba(255,95,75,.16), transparent 45%);
+}
+html[data-period="morning"] body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 88% 52% at 28% -12%, rgba(90,200,255,.32), transparent 50%),
+    radial-gradient(ellipse 42% 36% at 88% 92%, rgba(70,220,175,.12), transparent 45%);
+}
+html[data-period="noon"] body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: radial-gradient(ellipse 105% 62% at 50% -22%, rgba(255,230,145,.26), transparent 48%);
+}
+html[data-period="afternoon"] body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 92% 58% at 72% -12%, rgba(255,155,45,.35), transparent 46%),
+    radial-gradient(ellipse 52% 42% at 8% 100%, rgba(255,95,35,.14), transparent 45%);
+}
+html[data-period="dusk"] body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 98% 58% at 58% -14%, rgba(195,70,220,.36), transparent 48%),
+    radial-gradient(ellipse 58% 48% at 12% 92%, rgba(255,85,115,.16), transparent 45%);
+}
+html[data-period="night"] body::before,
+html[data-period="late"] body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(ellipse 82% 52% at 78% -6%, rgba(70,95,220,.32), transparent 46%),
+    radial-gradient(ellipse 42% 32% at 18% 72%, rgba(55,35,155,.14), transparent 45%);
+}
+
+/* ヘッダー微調整 */
+html[data-period="night"] .site-header,
+html[data-period="late"] .site-header {
+  background: color-mix(in srgb, var(--rt-bg) 92%, #000);
+}
+html[data-weather="fog"] .site-header {
+  backdrop-filter: blur(32px) saturate(.65);
+  -webkit-backdrop-filter: blur(32px) saturate(.65);
+}
+
+body, .card, .site-header, .site-footer, .btn {
+  transition: background-color 1.4s ease, color 1.4s ease, border-color 1.4s ease, box-shadow 1.4s ease, filter 1.4s ease;
+}
+
+html[data-weather="rain"] body,
+html[data-weather="rain-heavy"] body { filter: saturate(.92); }
+html[data-weather="fog"] body { filter: saturate(.78) contrast(.96); }
+html[data-weather="snow"] body { filter: saturate(.88) brightness(1.03); }
+html[data-weather="storm"] body { filter: saturate(1.08) contrast(1.04); }
+
+@media (prefers-reduced-motion: reduce) {
+  .rt-atmosphere::before,
+  .rt-atmosphere::after {
+    animation: none !important;
+  }
+}
