@@ -1,6 +1,7 @@
 /**
  * kyushu-kenshu-2026 — geolocation.js
  * 現在地取得 → 最寄り訪問地・日程ハイライト
+ * 近傍バッジはヘッダー下（モバイルで FAB と重ならない位置）
  */
 (function () {
   'use strict';
@@ -42,6 +43,13 @@
     });
   }
 
+  function headerBottom() {
+    var h = document.querySelector('.site-header');
+    if (!h) return 56;
+    var r = h.getBoundingClientRect();
+    return Math.max(48, Math.round(r.bottom));
+  }
+
   function showNearBadge(result) {
     var existing = document.getElementById('kk-near-badge');
     if (existing) existing.remove();
@@ -49,16 +57,29 @@
 
     var el = document.createElement('div');
     el.id = 'kk-near-badge';
+    el.className = 'kk-near-badge';
     el.setAttribute('role', 'status');
+
+    var top = headerBottom() + 8;
     el.style.cssText =
-      'position:fixed;left:max(0.75rem,env(safe-area-inset-left));' +
-      'bottom:max(1.2rem,env(safe-area-inset-bottom));z-index:90;' +
-      'max-width:min(280px,70vw);padding:0.65rem 0.9rem;border-radius:8px;' +
-      'background:color-mix(in srgb,var(--rt-card,#151a24) 92%,transparent);' +
-      'border:1px solid color-mix(in srgb,var(--rt-accent,#c9a227) 45%,transparent);' +
-      'color:var(--rt-text,#e8eef7);font-size:0.78rem;line-height:1.45;' +
-      'box-shadow:0 8px 24px rgba(0,0,0,0.35);backdrop-filter:blur(10px);' +
-      '-webkit-backdrop-filter:blur(10px);';
+      'position:fixed;' +
+      'top:' + top + 'px;' +
+      'left:max(0.75rem, env(safe-area-inset-left));' +
+      'right:auto;' +
+      'bottom:auto;' +
+      'z-index:95;' +
+      'max-width:min(17.5rem, calc(100vw - 5.5rem));' +
+      'padding:0.6rem 0.85rem;' +
+      'border-radius:10px;' +
+      'background:color-mix(in srgb, var(--rt-card, #151a24) 94%, transparent);' +
+      'border:1px solid color-mix(in srgb, var(--rt-accent, #c9a227) 45%, transparent);' +
+      'color:var(--rt-text, #e8eef7);' +
+      'font-size:0.76rem;' +
+      'line-height:1.45;' +
+      'box-shadow:0 8px 24px rgba(0,0,0,0.32);' +
+      'backdrop-filter:blur(12px);' +
+      '-webkit-backdrop-filter:blur(12px);' +
+      'pointer-events:auto;';
 
     var kmStr = result.km < 1
       ? Math.round(result.km * 1000) + ' m'
@@ -75,20 +96,32 @@
       ' <span style="opacity:0.75;">(' + kmStr + ')</span>' +
       (result.loc.summary ? '<br><span style="opacity:0.8;">' + result.loc.summary + '</span>' : '') +
       linkHtml +
-      '<br><button type="button" id="kk-near-close" style="margin-top:0.4rem;font-size:0.7rem;opacity:0.7;background:none;border:none;color:inherit;cursor:pointer;padding:0;">閉じる</button>';
+      '<br><button type="button" id="kk-near-close" class="kk-near-close">閉じる</button>';
 
     document.body.appendChild(el);
+
     var closeBtn = document.getElementById('kk-near-close');
     if (closeBtn) {
+      closeBtn.style.cssText =
+        'margin-top:0.35rem;font-size:0.7rem;opacity:0.75;background:none;border:none;' +
+        'color:inherit;cursor:pointer;padding:0.2rem 0;touch-action:manipulation;';
       closeBtn.addEventListener('click', function () { el.remove(); });
     }
 
     if (result.loc.day) highlightDay(result.loc.day);
 
-    // 天気APIの座標も最寄りに寄せる
     if (window.KKTheme && typeof window.KKTheme.setCoords === 'function') {
       window.KKTheme.setCoords(result.loc.lat, result.loc.lon);
     }
+
+    // ヘッダー高さ変化に追従（回転など）
+    window.addEventListener('resize', function onR() {
+      if (!document.getElementById('kk-near-badge')) {
+        window.removeEventListener('resize', onR);
+        return;
+      }
+      el.style.top = (headerBottom() + 8) + 'px';
+    });
   }
 
   function onSuccess(pos) {
@@ -106,14 +139,12 @@
   }
 
   function onError() {
-    // 静かに失敗（許可拒否など）。キャッシュがあれば使う
     try {
       var cached = sessionStorage.getItem('kk-geo');
       if (cached) {
         var o = JSON.parse(cached);
         if (o && o.lat != null && Date.now() - o.t < 30 * 60 * 1000) {
-          var result = findNearest(o.lat, o.lon);
-          showNearBadge(result);
+          showNearBadge(findNearest(o.lat, o.lon));
         }
       }
     } catch (e) {}
@@ -129,8 +160,7 @@
   }
 
   function boot() {
-    // ページ読み込み後少し待ってから（UX）
-    setTimeout(requestGeo, 1200);
+    setTimeout(requestGeo, 900);
   }
 
   if (document.readyState === 'loading') {

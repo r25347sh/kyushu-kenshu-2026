@@ -3,7 +3,7 @@
 **令和8年（2026年）10月20日（火）〜10月23日（金）〈3泊4日〉**
 
 麗澤高等学校 5学年 九州研修旅行 専用サイトです。  
-日程スケジュール・訪問地情報・天気／時間帯連動デザイン・現在地連動を備えています。
+日程・訪問地・天気／時間帯連動・現在地連動・テーマ切替を備えた **モバイルファースト** サイトです。
 
 **ライブURL（GitHub Pages 有効化後）**  
 https://r25347sh.github.io/kyushu-kenshu-2026/
@@ -13,43 +13,36 @@ https://r25347sh.github.io/kyushu-kenshu-2026/
 | パス | 内容 |
 |------|------|
 | `/` | 全体概要・主旨・日程ナビ |
-| `/day1/` | 10/20 グループ別タイムライン＋宇佐神宮・青の洞門・中津・別府 |
-| `/day2/` | 10/21 高千穂（神社・峡・天岩戸）・阿蘇 |
-| `/day3/` | 10/22 知覧・長崎鼻・指宿 |
-| `/day4/` | 10/23 鹿児島自由行動・帰路 |
+| `/day1/`〜`/day4/` | 日別タイムライン・スポット詳細 |
 | `/packing/` | 持ち物チェック |
 | `/rules/` | 心得・宿舎ルール |
-| `sources/09/` | 公式資料のテキスト要約 |
+| `sources/09/` | 公式資料テキスト要約 |
 
-## デザイン・機能
+## 機能
 
-- **放射状メニュー**（長押し / トリプルタップ）＋ **ハンバーガーFAB**（reitansai方式）
-- **天気・時間帯連動** atmosphere（Open-Meteo、座標は現在地に応じて更新）
-- **現在地連動**：位置情報許可で最寄り訪問地バッジ＋日程ナビのハイライト
-- **テーマ切替**：ダーク / クラシック / システム（デフォルト：システム）＋時間・天気連動のON/OFF
-- モバイルファースト・reduced-motion対応
+- 放射状メニュー（長押し／トリプルタップ）＋ハンバーガー FAB
+- 天気・時間帯連動 atmosphere（Open-Meteo）
+- 現在地 → 最寄り訪問地バッジ（ヘッダー下・FABと非干渉）
+- テーマ: ダーク / クラシック / システム（デフォルト: システム）
 
-## 外部リンク（すべて HTTPS）
+## 外部リンクのプロトコル
 
-- Open-Meteo API: `https://api.open-meteo.com/...`
-- Google Fonts: `https://fonts.googleapis.com/...`
-- 宇佐神宮公式（参考）: `https://www.usajinguu.com/`
+| 先 | プロトコル |
+|----|------------|
+| Open-Meteo | `https://` |
+| Google Fonts | `https://` |
+| **宇佐神宮公式** | **`http://www.usajinguu.com/`**（SSL非対応のため http のまま） |
 
-※ http を https に誤変換しないこと（逆も同様）。
-
-## 技術
-
-- 純粋 HTML / CSS / JS（ビルド不要）
-- ベースパス: `/kyushu-kenshu-2026/`
+※ http と https を誤変換しないこと。
 
 ## 開発フェーズ
 
-- [x] Phase 0〜3
-- [x] Phase 4: テーマ切替・Pages 設定・リンク確認
+- [x] Phase 0〜4
+- [x] Phase 5: 位置修正（近傍バッジ・FAB・MENU座標）・宇佐神宮 http・モバイル最適化
 
 ## GitHub Pages
 
-Settings → Pages → Source: **GitHub Actions** を選択するとデプロイされます。
+Settings → Pages → Source: **GitHub Actions**
 
 ---
 

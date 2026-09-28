@@ -1,12 +1,22 @@
 /* =========================================================
    kyushu-kenshu-2026 — Radial Menu + FAB
-   reitansai方式を継承しつつ九州研修のトーンに調整
+   モバイルファースト位置調整
    ========================================================= */
 :root {
   --rm-font: 'Noto Sans JP', system-ui, sans-serif;
-  --rm-item-size: 58px;
+  --rm-item-size: 50px;
   --rm-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
   --rm-z: 2147482000;
+  --fab-size: 52px;
+  --fab-gap: 0.75rem;
+}
+
+@media (min-width: 481px) {
+  :root {
+    --rm-item-size: 58px;
+    --fab-size: 56px;
+    --fab-gap: 1rem;
+  }
 }
 
 .radial-menu-wrapper {
@@ -20,6 +30,7 @@
   visibility: hidden;
   opacity: 0;
   transition: visibility 0s linear 0.28s, opacity 0.18s ease-out;
+  /* transform 原点は left/top の点 */
 }
 .radial-menu-wrapper.active {
   pointer-events: auto;
@@ -46,15 +57,15 @@
 
 .rm-core-btn {
   position: absolute;
-  width: 52px;
-  height: 52px;
-  margin-top: -26px;
-  margin-left: -26px;
+  width: 48px;
+  height: 48px;
+  margin-top: -24px;
+  margin-left: -24px;
   border-radius: 50%;
   border: 2px solid color-mix(in srgb, var(--rt-accent, #c9a227) 70%, transparent);
   background: var(--rt-card, #151a24);
   color: var(--rt-accent, #c9a227);
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 700;
   cursor: pointer;
   display: flex;
@@ -67,6 +78,15 @@
   transform: scale(0);
   transition: transform 0.45s var(--rm-ease), opacity 0.22s ease;
   touch-action: manipulation;
+}
+@media (min-width: 481px) {
+  .rm-core-btn {
+    width: 52px;
+    height: 52px;
+    margin-top: -26px;
+    margin-left: -26px;
+    font-size: 18px;
+  }
 }
 .rm-core-btn.visible {
   opacity: 1;
@@ -84,7 +104,7 @@
   border: 2px solid color-mix(in srgb, var(--rt-accent, #c9a227) 55%, transparent);
   background: var(--rt-card, #1a2230);
   color: var(--rt-text, #e8eef7);
-  font-size: 22px;
+  font-size: 18px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -98,6 +118,9 @@
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
 }
+@media (min-width: 481px) {
+  .rm-item { font-size: 22px; }
+}
 .radial-menu-wrapper.active .rm-item.rendered {
   opacity: 1;
   pointer-events: auto;
@@ -108,7 +131,7 @@
   background: var(--rt-accent, #c9a227) !important;
   border-color: color-mix(in srgb, var(--rt-accent, #c9a227) 90%, #fff);
   color: var(--rt-bg, #0b0e14);
-  transform: translate3d(var(--x), var(--y), 0) scale(1.14) !important;
+  transform: translate3d(var(--x), var(--y), 0) scale(1.12) !important;
   z-index: 5;
 }
 .rm-item.has-sub {
@@ -119,20 +142,20 @@
 .rm-item::after {
   content: attr(data-label);
   position: absolute;
-  bottom: -36px;
+  bottom: -32px;
   left: 50%;
   transform: translateX(-50%) translateY(-6px) scale(0.85);
   background: var(--rt-bg, #0b0e14);
   color: #fff;
-  padding: 5px 10px;
+  padding: 4px 8px;
   border-radius: 4px;
   border: 1px solid color-mix(in srgb, var(--rt-accent, #c9a227) 65%, transparent);
   font-family: var(--rm-font);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.03em;
   white-space: nowrap;
-  max-width: 9.5em;
+  max-width: 7.5em;
   overflow: hidden;
   text-overflow: ellipsis;
   opacity: 0;
@@ -140,6 +163,14 @@
   box-shadow: 0 6px 20px rgba(0,0,0,0.55);
   transition: transform 0.35s var(--rm-ease), opacity 0.22s ease;
   z-index: 20;
+}
+@media (min-width: 481px) {
+  .rm-item::after {
+    font-size: 11px;
+    padding: 5px 10px;
+    bottom: -36px;
+    max-width: 9.5em;
+  }
 }
 .radial-menu-wrapper.active .rm-item.rendered::after {
   opacity: 1;
@@ -151,23 +182,33 @@
   border-color: color-mix(in srgb, var(--rt-accent, #c9a227) 90%, #fff);
 }
 
+/* FAB: 右下・safe-area 対応・近傍バッジと分離 */
 .menu-fab {
   position: fixed !important;
-  right: max(1rem, env(safe-area-inset-right));
-  bottom: max(1.2rem, env(safe-area-inset-bottom));
+  right: max(var(--fab-gap), env(safe-area-inset-right, 0px));
+  bottom: max(var(--fab-gap), env(safe-area-inset-bottom, 0px));
   z-index: 2147481000 !important;
-  width: 56px;
-  height: 56px;
-  border-radius: 8px;
+  width: var(--fab-size);
+  height: var(--fab-size);
+  border-radius: 12px;
   border: 1px solid color-mix(in srgb, var(--rt-accent, #c9a227) 60%, transparent);
   cursor: pointer;
-  font-size: 1.35rem;
+  font-size: 1.25rem;
+  line-height: 1;
   background: var(--rt-card, #151a24);
   color: var(--rt-accent, #c9a227);
-  box-shadow: 0 0 0 1px rgba(0,0,0,0.3), 0 12px 32px rgba(0,0,0,0.4), 0 0 20px color-mix(in srgb, var(--rt-accent, #c9a227) 20%, transparent);
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.25),
+    0 10px 28px rgba(0,0,0,0.38),
+    0 0 16px color-mix(in srgb, var(--rt-accent, #c9a227) 18%, transparent);
   transition: transform 0.25s var(--rm-ease), background 0.2s, color 0.2s;
   touch-action: manipulation;
   -webkit-tap-highlight-color: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
 }
 .menu-fab:hover,
 .menu-fab:active {
@@ -176,19 +217,7 @@
   color: var(--rt-bg, #0b0e14);
 }
 
-@media (max-width: 480px) {
-  :root { --rm-item-size: 50px; }
-  .rm-item { font-size: 18px; }
-  .rm-item::after {
-    font-size: 10px;
-    padding: 4px 8px;
-    bottom: -32px;
-    max-width: 7.5em;
-  }
-  .menu-fab {
-    width: 52px;
-    height: 52px;
-    right: max(0.75rem, env(safe-area-inset-right));
-    bottom: max(1rem, env(safe-area-inset-bottom));
-  }
+/* 本文が FAB に隠れないよう下余白 */
+body {
+  padding-bottom: calc(var(--fab-size) + var(--fab-gap) + env(safe-area-inset-bottom, 0px) + 0.5rem);
 }

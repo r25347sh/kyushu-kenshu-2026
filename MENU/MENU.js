@@ -1,6 +1,6 @@
 /**
  * kyushu-kenshu-2026 Radial Menu + Hamburger FAB
- * reitansai方式を継承。ベースパスを /kyushu-kenshu-2026/ に適応。
+ * モバイルファースト: 展開座標のクランプを最大半径ベースで正確に
  */
 (function () {
   'use strict';
@@ -83,11 +83,41 @@
     });
   }
 
-  function shellConfig() {
-    var w = window.innerWidth;
-    if (w < 420) return { caps: [5, 8, 12], radii: [88, 140, 192], margin: 110 };
-    if (w < 720) return { caps: [6, 9, 13], radii: [100, 165, 230], margin: 140 };
-    return { caps: [6, 10, 14], radii: [118, 190, 262], margin: 180 };
+  function viewportSize() {
+    var vv = window.visualViewport;
+    if (vv && vv.width && vv.height) {
+      return { w: vv.width, h: vv.height, ox: vv.offsetLeft || 0, oy: vv.offsetTop || 0 };
+    }
+    return { w: window.innerWidth, h: window.innerHeight, ox: 0, oy: 0 };
+  }
+
+  /** アイテム数に応じたシェル。モバイルは半径を抑えて画面内に収める */
+  function shellConfig(itemCount) {
+    var vp = viewportSize();
+    var w = vp.w;
+    var h = vp.h;
+    var n = itemCount || 8;
+    var maxR;
+    if (w < 380) {
+      maxR = Math.min(100, Math.floor(Math.min(w, h) * 0.32));
+      return {
+        caps: [Math.min(n, 6), 8, 12],
+        radii: [Math.round(maxR * 0.55), maxR, Math.round(maxR * 1.15)],
+        margin: maxR + 36
+      };
+    }
+    if (w < 480) {
+      maxR = Math.min(120, Math.floor(Math.min(w, h) * 0.34));
+      return {
+        caps: [Math.min(n, 6), 9, 12],
+        radii: [Math.round(maxR * 0.55), maxR, Math.round(maxR * 1.2)],
+        margin: maxR + 40
+      };
+    }
+    if (w < 720) {
+      return { caps: [6, 9, 13], radii: [100, 155, 210], margin: 155 };
+    }
+    return { caps: [6, 10, 14], radii: [118, 190, 250], margin: 175 };
   }
 
   function navigateWithDelay(href) {
@@ -97,7 +127,7 @@
   }
 
   function calculateShellLayout(items) {
-    var cfg = shellConfig();
+    var cfg = shellConfig(items.length);
     var layout = [], remaining = items.length, itemIdx = 0;
     for (var sIdx = 0; sIdx < cfg.caps.length && remaining > 0; sIdx++) {
       var count = Math.min(remaining, cfg.caps[sIdx]);
@@ -174,6 +204,8 @@
     if (document.querySelector('.radial-menu-wrapper')) {
       menuEl = document.querySelector('.radial-menu-wrapper');
       itemsContainer = menuEl.querySelector('.rm-items') || menuEl;
+      orbitsContainer = menuEl.querySelector('.rm-orbits') || orbitsContainer;
+      coreBtn = menuEl.querySelector('.rm-core-btn') || coreBtn;
       return;
     }
     menuEl = document.createElement('div');
@@ -200,18 +232,35 @@
     document.body.appendChild(menuEl);
   }
 
+  /** タップ座標を画面内にクランプ（ラベル余白込み） */
+  function clampMenuOrigin(x, y, itemCount) {
+    var vp = viewportSize();
+    var cfg = shellConfig(itemCount);
+    var maxR = cfg.radii[Math.min(cfg.radii.length - 1, 1)] || cfg.radii[0];
+    var labelPad = 40;
+    var m = maxR + labelPad;
+    var cx = typeof x === 'number' ? x : vp.w / 2;
+    var cy = typeof y === 'number' ? y : vp.h / 2;
+    // visualViewport オフセットを考慮（モバイル URL バー等）
+    var left = Math.max(m, Math.min(cx, vp.w - m)) + (vp.ox || 0);
+    var top = Math.max(m, Math.min(cy, vp.h - m)) + (vp.oy || 0);
+    // 極端に狭い画面では中央固定
+    if (vp.w < m * 2 + 8) left = vp.w / 2 + (vp.ox || 0);
+    if (vp.h < m * 2 + 8) top = vp.h / 2 + (vp.oy || 0);
+    return { left: left, top: top };
+  }
+
   function openMenu(x, y) {
     if (!menuEl) createMenuDOM();
     clearTextSelectionSoon();
-    var margin = shellConfig().margin;
-    var cx = typeof x === 'number' ? x : window.innerWidth / 2;
-    var cy = typeof y === 'number' ? y : window.innerHeight / 2;
-    menuEl.style.left = Math.max(margin, Math.min(cx, window.innerWidth - margin)) + 'px';
-    menuEl.style.top = Math.max(margin, Math.min(cy, window.innerHeight - margin)) + 'px';
+    var data = buildMenuData();
+    var origin = clampMenuOrigin(x, y, data.length);
+    menuEl.style.left = origin.left + 'px';
+    menuEl.style.top = origin.top + 'px';
     menuEl.classList.add('active');
     isOpen = true;
     menuStack = [];
-    renderMenuLevel(buildMenuData());
+    renderMenuLevel(data);
   }
 
   function closeMenu() {
@@ -249,6 +298,8 @@
         t.closest('.radial-menu-wrapper') ||
         t.closest('#ham-panel') ||
         t.closest('#ham-overlay') ||
+        t.closest('#kk-near-badge') ||
+        t.closest('.rt-theme-ctrl') ||
         t.closest('a') ||
         t.closest('button') ||
         t.closest('input') ||
@@ -328,7 +379,13 @@
     });
 
     window.addEventListener('resize', function () {
-      if (isOpen && !menuStack.length) renderMenuLevel(buildMenuData());
+      if (isOpen && !menuStack.length) {
+        var data = buildMenuData();
+        var origin = clampMenuOrigin(window.innerWidth / 2, window.innerHeight / 2, data.length);
+        menuEl.style.left = origin.left + 'px';
+        menuEl.style.top = origin.top + 'px';
+        renderMenuLevel(data);
+      }
     });
   }
 
@@ -339,15 +396,15 @@
     style.textContent =
       '#ham-overlay{position:fixed;inset:0;z-index:2147483000;display:none;background:rgba(5,8,14,.78);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}' +
       '#ham-overlay.open{display:block}' +
-      '#ham-panel{position:fixed;inset:0;z-index:2147483001;display:none;flex-direction:column;background:var(--rt-bg,#0b0e14);color:var(--rt-text,#e8eef7);padding:1.1rem 1.1rem calc(1.5rem + env(safe-area-inset-bottom));overflow:auto;-webkit-overflow-scrolling:touch}' +
+      '#ham-panel{position:fixed;inset:0;z-index:2147483001;display:none;flex-direction:column;background:var(--rt-bg,#0b0e14);color:var(--rt-text,#e8eef7);padding:max(1rem,env(safe-area-inset-top)) max(1rem,env(safe-area-inset-right)) calc(1.5rem + env(safe-area-inset-bottom)) max(1rem,env(safe-area-inset-left));overflow:auto;-webkit-overflow-scrolling:touch}' +
       '#ham-panel.open{display:flex}' +
       '#ham-list{display:flex;flex-direction:column;gap:.45rem;padding-bottom:2rem}' +
-      '.ham-link,.ham-group-btn{display:block;width:100%;text-align:left;padding:.9rem 1rem;border-radius:6px;background:var(--rt-card,#151a24);border:1px solid color-mix(in srgb,var(--rt-accent,#c9a227) 35%,transparent);color:var(--rt-text,#f0f4fa);text-decoration:none;font:inherit;font-weight:700;font-size:0.95rem;cursor:pointer;letter-spacing:0.03em;touch-action:manipulation}' +
+      '.ham-link,.ham-group-btn{display:block;width:100%;text-align:left;padding:.9rem 1rem;border-radius:8px;background:var(--rt-card,#151a24);border:1px solid color-mix(in srgb,var(--rt-accent,#c9a227) 35%,transparent);color:var(--rt-text,#f0f4fa);text-decoration:none;font:inherit;font-weight:700;font-size:0.95rem;cursor:pointer;letter-spacing:0.03em;touch-action:manipulation;min-height:44px}' +
       '.ham-link:active,.ham-group-btn:active{background:var(--rt-accent,#c9a227);color:var(--rt-bg,#0b0e14)}' +
       '.ham-sub{display:none;flex-direction:column;gap:.28rem;padding:0.35rem 0 0.35rem 0.65rem}' +
       '.ham-sub.open{display:flex}' +
-      '.ham-sub a{color:var(--rt-text,#e8eef7);text-decoration:none;padding:.6rem .75rem;border-radius:6px;font-weight:600;font-size:0.88rem;background:var(--rt-bg-soft,#12161f);border:1px solid rgba(255,255,255,0.08);touch-action:manipulation}' +
-      '.ham-close{border:1px solid color-mix(in srgb,var(--rt-accent,#c9a227) 50%,transparent);background:var(--rt-card,#151a24);color:var(--rt-accent,#c9a227);width:44px;height:44px;border-radius:6px;cursor:pointer;font-size:1.15rem;font-weight:700;touch-action:manipulation}' +
+      '.ham-sub a{color:var(--rt-text,#e8eef7);text-decoration:none;padding:.7rem .75rem;border-radius:8px;font-weight:600;font-size:0.88rem;background:var(--rt-bg-soft,#12161f);border:1px solid rgba(255,255,255,0.08);touch-action:manipulation;min-height:44px;display:flex;align-items:center}' +
+      '.ham-close{border:1px solid color-mix(in srgb,var(--rt-accent,#c9a227) 50%,transparent);background:var(--rt-card,#151a24);color:var(--rt-accent,#c9a227);width:44px;height:44px;border-radius:8px;cursor:pointer;font-size:1.15rem;font-weight:700;touch-action:manipulation;flex-shrink:0}' +
       '#ham-title{font-family:Shippori Mincho,serif;font-weight:700;font-size:1.1rem;letter-spacing:0.12em;color:var(--rt-accent,#c9a227)}';
     document.head.appendChild(style);
 
