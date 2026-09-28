@@ -1,0 +1,11 @@
+/* index.html 専用 */
+.hero {
+  text-align: center;
+  padding: 1.75rem 1.4rem;
+}
+.hero h1 {
+  margin-bottom: 0.4em;
+}
+.lead {
+  letter-spacing: 0.02em;
+}

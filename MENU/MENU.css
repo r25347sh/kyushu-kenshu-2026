@@ -1,0 +1,194 @@
+/* =========================================================
+   kyushu-kenshu-2026 — Radial Menu + FAB
+   reitansai方式を継承しつつ九州研修のトーンに調整
+   ========================================================= */
+:root {
+  --rm-font: 'Noto Sans JP', system-ui, sans-serif;
+  --rm-item-size: 58px;
+  --rm-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --rm-z: 2147482000;
+}
+
+.radial-menu-wrapper {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  z-index: var(--rm-z) !important;
+  pointer-events: none;
+  visibility: hidden;
+  opacity: 0;
+  transition: visibility 0s linear 0.28s, opacity 0.18s ease-out;
+}
+.radial-menu-wrapper.active {
+  pointer-events: auto;
+  visibility: visible;
+  opacity: 1;
+  transition: visibility 0s linear 0s, opacity 0.12s ease-in;
+}
+
+.rm-shell-orbit {
+  position: absolute;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--rt-lab, #5ec8c8) 45%, transparent);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--rt-lab, #5ec8c8) 15%, transparent);
+  pointer-events: none;
+  z-index: 2;
+  transform: scale(0.15) rotate(-90deg);
+  opacity: 0;
+  transition: transform 0.6s var(--rm-ease), opacity 0.35s ease;
+}
+.radial-menu-wrapper.active .rm-shell-orbit {
+  transform: scale(1) rotate(0deg);
+  opacity: 1;
+}
+
+.rm-core-btn {
+  position: absolute;
+  width: 52px;
+  height: 52px;
+  margin-top: -26px;
+  margin-left: -26px;
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--rt-accent, #c9a227) 70%, transparent);
+  background: var(--rt-card, #151a24);
+  color: var(--rt-accent, #c9a227);
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+  box-shadow: 0 0 24px color-mix(in srgb, var(--rt-accent, #c9a227) 35%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0);
+  transition: transform 0.45s var(--rm-ease), opacity 0.22s ease;
+  touch-action: manipulation;
+}
+.rm-core-btn.visible {
+  opacity: 1;
+  pointer-events: auto;
+  transform: scale(1);
+}
+
+.rm-item {
+  position: absolute;
+  width: var(--rm-item-size);
+  height: var(--rm-item-size);
+  margin-top: calc(-1 * var(--rm-item-size) / 2);
+  margin-left: calc(-1 * var(--rm-item-size) / 2);
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--rt-accent, #c9a227) 55%, transparent);
+  background: var(--rt-card, #1a2230);
+  color: var(--rt-text, #e8eef7);
+  font-size: 22px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.06);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate3d(0, 0, 0) scale(0);
+  transition: transform 0.5s var(--rm-ease), opacity 0.28s ease, border-color 0.2s, background 0.25s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.radial-menu-wrapper.active .rm-item.rendered {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translate3d(var(--x), var(--y), 0) scale(1);
+}
+.rm-item:hover,
+.rm-item:active {
+  background: var(--rt-accent, #c9a227) !important;
+  border-color: color-mix(in srgb, var(--rt-accent, #c9a227) 90%, #fff);
+  color: var(--rt-bg, #0b0e14);
+  transform: translate3d(var(--x), var(--y), 0) scale(1.14) !important;
+  z-index: 5;
+}
+.rm-item.has-sub {
+  border-color: var(--rt-lab, #5ec8c8);
+  background: color-mix(in srgb, var(--rt-card, #162028) 90%, var(--rt-lab, #5ec8c8));
+}
+
+.rm-item::after {
+  content: attr(data-label);
+  position: absolute;
+  bottom: -36px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-6px) scale(0.85);
+  background: var(--rt-bg, #0b0e14);
+  color: #fff;
+  padding: 5px 10px;
+  border-radius: 4px;
+  border: 1px solid color-mix(in srgb, var(--rt-accent, #c9a227) 65%, transparent);
+  font-family: var(--rm-font);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  max-width: 9.5em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  opacity: 0;
+  pointer-events: none;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.55);
+  transition: transform 0.35s var(--rm-ease), opacity 0.22s ease;
+  z-index: 20;
+}
+.radial-menu-wrapper.active .rm-item.rendered::after {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0) scale(1);
+}
+.rm-item:hover::after {
+  background: var(--rt-accent, #c9a227);
+  color: var(--rt-bg, #0b0e14);
+  border-color: color-mix(in srgb, var(--rt-accent, #c9a227) 90%, #fff);
+}
+
+.menu-fab {
+  position: fixed !important;
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: max(1.2rem, env(safe-area-inset-bottom));
+  z-index: 2147481000 !important;
+  width: 56px;
+  height: 56px;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--rt-accent, #c9a227) 60%, transparent);
+  cursor: pointer;
+  font-size: 1.35rem;
+  background: var(--rt-card, #151a24);
+  color: var(--rt-accent, #c9a227);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.3), 0 12px 32px rgba(0,0,0,0.4), 0 0 20px color-mix(in srgb, var(--rt-accent, #c9a227) 20%, transparent);
+  transition: transform 0.25s var(--rm-ease), background 0.2s, color 0.2s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.menu-fab:hover,
+.menu-fab:active {
+  transform: scale(1.06);
+  background: var(--rt-accent, #c9a227);
+  color: var(--rt-bg, #0b0e14);
+}
+
+@media (max-width: 480px) {
+  :root { --rm-item-size: 50px; }
+  .rm-item { font-size: 18px; }
+  .rm-item::after {
+    font-size: 10px;
+    padding: 4px 8px;
+    bottom: -32px;
+    max-width: 7.5em;
+  }
+  .menu-fab {
+    width: 52px;
+    height: 52px;
+    right: max(0.75rem, env(safe-area-inset-right));
+    bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}
