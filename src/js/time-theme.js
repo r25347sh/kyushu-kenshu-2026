@@ -1,7 +1,8 @@
 /**
  * kyushu-kenshu-2026 — time-theme.js
- * 時間帯・天気連動（reitansai time-theme を九州中心座標に適応）
- * デフォルト座標: 大分・別府付近（33.28, 131.50）
+ * 時間帯・天気連動（テーマコントロール連携）
+ * デフォルト座標: 別府付近。geolocation で更新可。
+ * Open-Meteo は HTTPS のみ使用（http への誤変換禁止）
  */
 (function () {
   'use strict';
@@ -16,6 +17,37 @@
     '&timezone=Asia%2FTokyo';
 
   var lastWeather = null;
+
+  var STATIC_DARK = {
+    hue: 210, bg: '#0b0e14', bgSoft: '#12161f', card: '#151a24', cardHover: '#1c2330',
+    text: '#e8eef7', textMuted: '#9aa8bc', accent: '#c9a227',
+    accentSoft: 'rgba(201, 162, 39, 0.18)', border: 'rgba(180, 200, 230, 0.14)',
+    glow: 'rgba(100, 180, 255, 0.22)', lab: '#5ec8c8', grain: 0.04,
+    period: 'static', weather: 'off', isDay: false, temp: null
+  };
+  var STATIC_CLASSIC = {
+    hue: 36, bg: '#e4dcc8', bgSoft: '#ddd4bc', card: '#f0e9d8', cardHover: '#f5efe2',
+    text: '#2a2418', textMuted: '#5c5346', accent: '#8a6b1e',
+    accentSoft: 'rgba(138, 107, 30, 0.16)', border: 'rgba(60, 48, 28, 0.16)',
+    glow: 'rgba(180, 140, 60, 0.14)', lab: '#3d6b5c', grain: 0.02,
+    period: 'static', weather: 'off', isDay: true, temp: null
+  };
+
+  function currentScheme() {
+    if (window.KKThemeControl && typeof window.KKThemeControl.getScheme === 'function') {
+      return window.KKThemeControl.getScheme();
+    }
+    var s = ROOT.getAttribute('data-color-scheme');
+    if (s === 'classic' || s === 'light') return 'classic';
+    return 'dark';
+  }
+
+  function atmosphereEnabled() {
+    if (window.KKThemeControl && typeof window.KKThemeControl.isAtmosphereOn === 'function') {
+      return window.KKThemeControl.isAtmosphereOn();
+    }
+    return ROOT.getAttribute('data-atmosphere') !== 'off';
+  }
 
   function getJST() {
     var fmt = new Intl.DateTimeFormat('en-US', {
@@ -103,6 +135,57 @@
     };
   }
 
+  function paletteClassic(period, kind, isDay, temp) {
+    var map = {
+      dawn: { hue: 28, sat: 32, bgL: 88, textL: 16, acc: 32, muted: 40 },
+      morning: { hue: 40, sat: 28, bgL: 90, textL: 15, acc: 36, muted: 38 },
+      noon: { hue: 42, sat: 22, bgL: 91, textL: 14, acc: 38, muted: 36 },
+      afternoon: { hue: 32, sat: 30, bgL: 89, textL: 15, acc: 30, muted: 38 },
+      dusk: { hue: 20, sat: 28, bgL: 87, textL: 16, acc: 24, muted: 40 },
+      night: { hue: 30, sat: 20, bgL: 86, textL: 15, acc: 34, muted: 38 },
+      late: { hue: 28, sat: 18, bgL: 85, textL: 14, acc: 32, muted: 36 }
+    };
+    var b = map[period] || map.noon;
+    var overlay = { hueShift: 0, satMul: 1, bgDelta: 0, glow: null, grain: 0.02, accShift: 0, textDelta: 0 };
+    switch (kind) {
+      case 'clear': overlay = { hueShift: isDay ? 6 : -4, satMul: 1.15, bgDelta: isDay ? 1 : -2, glow: isDay ? 'rgba(200,160,80,0.22)' : 'rgba(140,120,80,0.14)', grain: 0.015 }; break;
+      case 'partly': overlay = { hueShift: 3, satMul: 1.05, bgDelta: 0, glow: 'rgba(160,140,100,0.14)', grain: 0.02 }; break;
+      case 'cloudy': overlay = { hueShift: -4, satMul: 0.5, bgDelta: -2, glow: 'rgba(120,110,90,0.12)', grain: 0.03, textDelta: 2 }; break;
+      case 'fog': overlay = { hueShift: -6, satMul: 0.3, bgDelta: -1, glow: 'rgba(190,180,160,0.22)', grain: 0.04, textDelta: 3 }; break;
+      case 'rain': overlay = { hueShift: 20, satMul: 0.85, bgDelta: -3, glow: 'rgba(80,110,140,0.2)', grain: 0.035, textDelta: 2 }; break;
+      case 'rain-heavy': overlay = { hueShift: 25, satMul: 0.8, bgDelta: -4, glow: 'rgba(60,90,130,0.24)', grain: 0.045, textDelta: 3 }; break;
+      case 'snow': overlay = { hueShift: -10, satMul: 0.25, bgDelta: 1, glow: 'rgba(230,225,210,0.3)', grain: 0.02 }; break;
+      case 'storm': overlay = { hueShift: 30, satMul: 1.05, bgDelta: -5, glow: 'rgba(100,80,140,0.2)', grain: 0.05, textDelta: 4 }; break;
+      default: overlay = { hueShift: 0, satMul: 0.85, bgDelta: 0, glow: 'rgba(150,130,90,0.12)', grain: 0.02 };
+    }
+    var hue = (b.hue + overlay.hueShift + 360) % 360;
+    var sat = Math.max(8, Math.min(36, b.sat * overlay.satMul));
+    var bgL = Math.max(82, Math.min(92, b.bgL + overlay.bgDelta));
+    var textL = Math.max(10, Math.min(24, b.textL + (overlay.textDelta || 0)));
+    var mutedL = Math.max(30, Math.min(48, b.muted + (overlay.textDelta || 0)));
+    var accHue = (b.acc + (overlay.accShift || 0) + 360) % 360;
+    return {
+      hue: hue,
+      bg: 'hsl(' + hue + ' ' + sat + '% ' + bgL + '%)',
+      bgSoft: 'hsl(' + hue + ' ' + Math.max(6, sat - 4) + '% ' + Math.max(80, bgL - 3) + '%)',
+      card: 'hsl(' + hue + ' ' + Math.max(5, sat - 6) + '% ' + Math.min(95, bgL + 5) + '%)',
+      cardHover: 'hsl(' + hue + ' ' + Math.max(6, sat - 3) + '% ' + Math.min(96, bgL + 6) + '%)',
+      text: 'hsl(' + hue + ' 28% ' + textL + '%)',
+      textMuted: 'hsl(' + hue + ' 12% ' + mutedL + '%)',
+      accent: 'hsl(' + accHue + ' 48% 32%)',
+      accentSoft: 'hsla(' + accHue + ' 48% 32% / 0.15)',
+      border: 'hsla(' + hue + ' 18% 25% / 0.14)',
+      glow: overlay.glow || 'hsla(' + hue + ' 40% 40% / 0.14)',
+      lab: 'hsl(160 35% 32%)',
+      grain: overlay.grain, period: period, weather: kind, isDay: !!isDay, temp: temp
+    };
+  }
+
+  function palette(period, kind, isDay, temp) {
+    if (currentScheme() === 'classic') return paletteClassic(period, kind, isDay, temp);
+    return paletteDark(period, kind, isDay, temp);
+  }
+
   function apply(p) {
     ROOT.style.setProperty('--rt-hue', p.hue);
     ROOT.style.setProperty('--rt-bg', p.bg);
@@ -120,7 +203,6 @@
     ROOT.dataset.period = p.period;
     ROOT.dataset.weather = p.weather;
     if (p.temp != null) ROOT.dataset.temp = String(Math.round(p.temp));
-    ROOT.dataset.place = 'beppu-oita';
     if (BODY) {
       BODY.dataset.period = p.period;
       BODY.dataset.weather = p.weather;
@@ -129,23 +211,51 @@
     }
     var layer = document.getElementById('rt-atmosphere');
     if (layer) {
-      layer.style.display = '';
-      layer.className = 'rt-atmosphere wx-' + p.weather + ' pd-' + p.period + (p.isDay ? ' day' : ' night');
+      if (!atmosphereEnabled() || p.weather === 'off') {
+        layer.className = 'rt-atmosphere wx-off';
+        layer.style.display = 'none';
+      } else {
+        layer.style.display = '';
+        layer.className = 'rt-atmosphere wx-' + p.weather + ' pd-' + p.period + (p.isDay ? ' day' : ' night');
+      }
     }
   }
 
+  function clearInlineVars() {
+    ['--rt-hue','--rt-bg','--rt-bg-soft','--rt-card','--rt-card-hover','--rt-text','--rt-text-muted','--rt-accent','--rt-accent-soft','--rt-border','--rt-glow','--rt-lab','--rt-grain'].forEach(function (k) {
+      ROOT.style.removeProperty(k);
+    });
+  }
+
   function tickTime() {
+    if (!atmosphereEnabled()) {
+      var scheme = currentScheme();
+      clearInlineVars();
+      ROOT.dataset.period = 'static';
+      ROOT.dataset.weather = 'off';
+      if (BODY) {
+        BODY.dataset.period = 'static';
+        BODY.dataset.weather = 'off';
+        BODY.classList.toggle('is-day', scheme !== 'dark');
+        BODY.classList.toggle('is-night', scheme === 'dark');
+      }
+      var layer = document.getElementById('rt-atmosphere');
+      if (layer) { layer.className = 'rt-atmosphere wx-off'; layer.style.display = 'none'; }
+      // CSS の data-color-scheme に任せる（クラシック固定色）
+      return scheme === 'classic' ? STATIC_CLASSIC : STATIC_DARK;
+    }
     var j = getJST();
     var period = periodFromHours(j.hours);
     var w = lastWeather || {};
     var kind = weatherKind(w.weather_code, w.precipitation, w.cloud_cover);
     var isDay = w.is_day != null ? !!w.is_day : (j.hours >= 6 && j.hours < 18);
-    var p = paletteDark(period, kind, isDay, w.temperature_2m);
+    var p = palette(period, kind, isDay, w.temperature_2m);
     apply(p);
     return p;
   }
 
   function fetchWeather() {
+    if (!atmosphereEnabled()) return Promise.resolve();
     return fetch(WEATHER_URL)
       .then(function (r) { return r.json(); })
       .then(function (data) {
@@ -183,6 +293,10 @@
     document.addEventListener('visibilitychange', function () {
       if (!document.hidden) { tickTime(); fetchWeather(); }
     });
+    document.addEventListener('kk-theme-change', function () {
+      tickTime();
+      if (atmosphereEnabled()) fetchWeather();
+    });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
@@ -192,7 +306,8 @@
     tick: tickTime,
     fetchWeather: fetchWeather,
     setCoords: function (lat, lon) {
-      LAT = lat; LON = lon;
+      LAT = lat;
+      LON = lon;
       WEATHER_URL =
         'https://api.open-meteo.com/v1/forecast?latitude=' + LAT +
         '&longitude=' + LON +
