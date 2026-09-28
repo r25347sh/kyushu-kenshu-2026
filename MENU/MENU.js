@@ -1,7 +1,6 @@
 /**
  * kyushu-kenshu-2026 Radial Menu + Hamburger FAB
- * UI は KKPortal（html 直下・viewport fixed）にマウント
- * 座標は clientX / clientY（ビューポート）のみ使用
+ * アニメ強化: スタッガー展開・閉じアニメ・スクラム・クラシック対応色は CSS 変数
  */
 (function () {
   'use strict';
@@ -53,16 +52,17 @@
   var LONG_PRESS_MS = 380;
   var TRIPLE_TAP_DELAY_MS = 320;
   var MOVE_THRESHOLD = 10;
-  var menuEl, itemsContainer, orbitsContainer, coreBtn;
+  var CLOSE_MS = 300;
+  var menuEl, itemsContainer, orbitsContainer, coreBtn, scrimEl;
   var timer, startX, startY, isOpen = false, menuStack = [];
   var pieDisabled = false;
   var tapCount = 0, tapTimer = null;
+  var closing = false;
 
   function portalMount(node) {
     if (window.KKPortal && typeof window.KKPortal.mount === 'function') {
       return window.KKPortal.mount(node);
     }
-    /* フォールバック: html 直下 */
     document.documentElement.appendChild(node);
     return node;
   }
@@ -131,7 +131,7 @@
   function navigateWithDelay(href) {
     closeMenu();
     closeHamburger();
-    setTimeout(function () { location.href = href; }, 160);
+    setTimeout(function () { location.href = href; }, 180);
   }
 
   function calculateShellLayout(items) {
@@ -162,7 +162,7 @@
     for (var i = 0; i < old.length; i++) {
       old[i].classList.remove('rendered');
       (function (el) {
-        setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 220);
+        setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 280);
       })(old[i]);
     }
     orbitsContainer.innerHTML = '';
@@ -178,7 +178,8 @@
       btn.innerHTML = data.item.icon || '•';
       btn.style.setProperty('--x', data.x + 'px');
       btn.style.setProperty('--y', data.y + 'px');
-      btn.style.transitionDelay = (index * 0.022) + 's';
+      /* 時計回りに広がるスタッガー */
+      btn.style.transitionDelay = (0.04 + index * 0.038) + 's';
       btn.addEventListener('click', function (e) {
         e.preventDefault();
         e.stopPropagation();
@@ -191,7 +192,7 @@
       });
       itemsContainer.appendChild(btn);
       requestAnimationFrame(function () {
-        setTimeout(function () { btn.classList.add('rendered'); }, 12);
+        setTimeout(function () { btn.classList.add('rendered'); }, 16);
       });
     });
     Object.keys(activeShells).forEach(function (sIdx) {
@@ -206,6 +207,24 @@
       orbitsContainer.appendChild(orbit);
     });
     coreBtn.classList.toggle('visible', menuStack.length > 0);
+  }
+
+  function ensureScrim() {
+    if (scrimEl && scrimEl.parentNode) return scrimEl;
+    scrimEl = document.createElement('div');
+    scrimEl.className = 'rm-scrim';
+    scrimEl.setAttribute('aria-hidden', 'true');
+    portalMount(scrimEl);
+    scrimEl.addEventListener('click', function () {
+      closeMenu();
+    });
+    return scrimEl;
+  }
+
+  function setScrim(on) {
+    ensureScrim();
+    if (on) scrimEl.classList.add('is-on');
+    else scrimEl.classList.remove('is-on');
   }
 
   function createMenuDOM() {
@@ -239,60 +258,68 @@
     });
     menuEl.appendChild(coreBtn);
     portalMount(menuEl);
+    ensureScrim();
   }
 
-  /**
-   * clientX/clientY はビューポート座標。
-   * ポータルが viewport fixed なので left/top にそのまま使える。
-   * スクロール量・文書高さは一切加算しない。
-   */
   function clampMenuOrigin(clientX, clientY, itemCount) {
     var vp = viewport();
     var cfg = shellConfig(itemCount);
     var maxR = cfg.radii[Math.min(1, cfg.radii.length - 1)] || cfg.radii[0];
-    var labelPad = 40;
+    var labelPad = 42;
     var m = maxR + labelPad;
     var cx = typeof clientX === 'number' ? clientX : vp.w / 2;
     var cy = typeof clientY === 'number' ? clientY : vp.h / 2;
-
     var left = Math.max(m, Math.min(cx, vp.w - m));
     var top = Math.max(m, Math.min(cy, vp.h - m));
-
     if (vp.w < m * 2 + 8) left = vp.w / 2;
     if (vp.h < m * 2 + 8) top = vp.h / 2;
-
     return { left: left, top: top };
   }
 
   function openMenu(clientX, clientY) {
+    if (closing) return;
     if (!menuEl) createMenuDOM();
     clearTextSelectionSoon();
     var data = buildMenuData();
     var origin = clampMenuOrigin(clientX, clientY, data.length);
+    menuEl.classList.remove('is-closing');
     menuEl.style.left = origin.left + 'px';
     menuEl.style.top = origin.top + 'px';
     menuEl.classList.add('active');
+    setScrim(true);
     isOpen = true;
     menuStack = [];
     renderMenuLevel(data);
   }
 
   function closeMenu() {
-    if (!menuEl) return;
-    menuEl.classList.remove('active');
-    if (itemsContainer) {
-      itemsContainer.querySelectorAll('.rm-item').forEach(function (i) {
-        i.classList.remove('rendered');
-      });
+    if (!menuEl || !isOpen) {
+      setScrim(false);
+      return;
     }
+    if (closing) return;
+    closing = true;
+    menuEl.classList.add('is-closing');
+    setScrim(false);
     if (coreBtn) coreBtn.classList.remove('visible');
-    isOpen = false;
+    setTimeout(function () {
+      menuEl.classList.remove('active');
+      menuEl.classList.remove('is-closing');
+      if (itemsContainer) {
+        itemsContainer.querySelectorAll('.rm-item').forEach(function (i) {
+          i.classList.remove('rendered');
+        });
+      }
+      isOpen = false;
+      closing = false;
+    }, CLOSE_MS);
   }
 
   function mountFab() {
-    if (document.querySelector('.menu-fab')) {
-      portalMount(document.querySelector('.menu-fab'));
-      return;
+    var existing = document.querySelector('.menu-fab');
+    if (existing) {
+      portalMount(existing);
+      return existing;
     }
     var fab = document.createElement('button');
     fab.type = 'button';
@@ -305,6 +332,7 @@
       e.stopPropagation();
       openHamburger();
     });
+    return fab;
   }
 
   function initEvents() {
@@ -313,6 +341,7 @@
       if (t.closest && (
         t.closest('.menu-fab') ||
         t.closest('.radial-menu-wrapper') ||
+        t.closest('.rm-scrim') ||
         t.closest('#ham-panel') ||
         t.closest('#ham-overlay') ||
         t.closest('#kk-near-badge') ||
@@ -329,7 +358,6 @@
         return;
       }
 
-      /* clientX/Y のみ — pageX/Y・scrollY は使わない */
       startX = e.clientX;
       startY = e.clientY;
       tapCount++;
@@ -397,7 +425,7 @@
     });
 
     window.addEventListener('resize', function () {
-      if (isOpen && !menuStack.length) {
+      if (isOpen && !menuStack.length && !closing) {
         var data = buildMenuData();
         var vp = viewport();
         var origin = clampMenuOrigin(vp.w / 2, vp.h / 2, data.length);
@@ -410,33 +438,16 @@
 
   function ensureHamburgerUI() {
     if (document.getElementById('ham-overlay')) return;
-    var style = document.createElement('style');
-    style.id = 'ham-style';
-    style.textContent =
-      '#ham-overlay{position:fixed;inset:0;z-index:2147483000;display:none;background:rgba(5,8,14,.78);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}' +
-      '#ham-overlay.open{display:block}' +
-      '#ham-panel{position:fixed;inset:0;z-index:2147483001;display:none;flex-direction:column;background:var(--rt-bg,#0b0e14);color:var(--rt-text,#e8eef7);padding:max(1rem,env(safe-area-inset-top)) max(1rem,env(safe-area-inset-right)) calc(1.5rem + env(safe-area-inset-bottom)) max(1rem,env(safe-area-inset-left));overflow:auto;-webkit-overflow-scrolling:touch}' +
-      '#ham-panel.open{display:flex}' +
-      '#ham-list{display:flex;flex-direction:column;gap:.45rem;padding-bottom:2rem}' +
-      '.ham-link,.ham-group-btn{display:block;width:100%;text-align:left;padding:.9rem 1rem;border-radius:8px;background:var(--rt-card,#151a24);border:1px solid color-mix(in srgb,var(--rt-accent,#c9a227) 35%,transparent);color:var(--rt-text,#f0f4fa);text-decoration:none;font:inherit;font-weight:700;font-size:0.95rem;cursor:pointer;letter-spacing:0.03em;touch-action:manipulation;min-height:44px}' +
-      '.ham-link:active,.ham-group-btn:active{background:var(--rt-accent,#c9a227);color:var(--rt-bg,#0b0e14)}' +
-      '.ham-sub{display:none;flex-direction:column;gap:.28rem;padding:0.35rem 0 0.35rem 0.65rem}' +
-      '.ham-sub.open{display:flex}' +
-      '.ham-sub a{color:var(--rt-text,#e8eef7);text-decoration:none;padding:.7rem .75rem;border-radius:8px;font-weight:600;font-size:0.88rem;background:var(--rt-bg-soft,#12161f);border:1px solid rgba(255,255,255,0.08);touch-action:manipulation;min-height:44px;display:flex;align-items:center}' +
-      '.ham-close{border:1px solid color-mix(in srgb,var(--rt-accent,#c9a227) 50%,transparent);background:var(--rt-card,#151a24);color:var(--rt-accent,#c9a227);width:44px;height:44px;border-radius:8px;cursor:pointer;font-size:1.15rem;font-weight:700;touch-action:manipulation;flex-shrink:0}' +
-      '#ham-title{font-family:Shippori Mincho,serif;font-weight:700;font-size:1.1rem;letter-spacing:0.12em;color:var(--rt-accent,#c9a227)}';
-    document.head.appendChild(style);
 
     var ov = document.createElement('div');
     ov.id = 'ham-overlay';
     var panel = document.createElement('div');
     panel.id = 'ham-panel';
     panel.innerHTML =
-      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.1rem;gap:1rem">' +
+      '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.15rem;gap:1rem">' +
       '<div id="ham-title">九州研修 MENU</div>' +
       '<button type="button" class="ham-close" id="ham-close" aria-label="閉じる">✕</button></div>' +
       '<div id="ham-list"></div>';
-    /* ハンバーガー全画面は documentElement 直下（ポータル外でも fixed が効くよう html に） */
     document.documentElement.appendChild(ov);
     document.documentElement.appendChild(panel);
     document.getElementById('ham-close').addEventListener('click', closeHamburger);
@@ -450,21 +461,26 @@
     clearTextSelectionSoon();
     var list = document.getElementById('ham-list');
     list.innerHTML = '';
-    buildMenuData().forEach(function (item) {
+    buildMenuData().forEach(function (item, idx) {
       if (item.items && item.items.length) {
         var wrap = document.createElement('div');
+        wrap.style.animationDelay = (0.05 + idx * 0.04) + 's';
         var btn = document.createElement('button');
         btn.type = 'button';
         btn.className = 'ham-group-btn';
         btn.textContent = (item.icon ? item.icon + ' ' : '') + item.label;
+        btn.style.animationDelay = (0.05 + idx * 0.04) + 's';
         var sub = document.createElement('div');
         sub.className = 'ham-sub';
+        var inner = document.createElement('div');
+        inner.className = 'ham-sub-inner';
         item.items.forEach(function (subItem) {
           var a = document.createElement('a');
           a.href = subItem.url || '#';
           a.textContent = (subItem.icon ? subItem.icon + ' ' : '') + subItem.label;
-          sub.appendChild(a);
+          inner.appendChild(a);
         });
+        sub.appendChild(inner);
         btn.addEventListener('click', function () {
           sub.classList.toggle('open');
         });
@@ -476,11 +492,14 @@
         a.className = 'ham-link';
         a.href = item.url || '#';
         a.textContent = (item.icon ? item.icon + ' ' : '') + item.label;
+        a.style.animationDelay = (0.05 + idx * 0.04) + 's';
         list.appendChild(a);
       }
     });
     document.getElementById('ham-overlay').classList.add('open');
     document.getElementById('ham-panel').classList.add('open');
+    var fab = document.querySelector('.menu-fab');
+    if (fab) fab.classList.add('is-open');
     document.body.style.overflow = 'hidden';
   }
 
@@ -489,6 +508,8 @@
     var panel = document.getElementById('ham-panel');
     if (ov) ov.classList.remove('open');
     if (panel) panel.classList.remove('open');
+    var fab = document.querySelector('.menu-fab');
+    if (fab) fab.classList.remove('is-open');
     pieDisabled = false;
     document.body.style.overflow = '';
   }
