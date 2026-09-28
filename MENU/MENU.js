@@ -1,6 +1,7 @@
 /**
  * kyushu-kenshu-2026 Radial Menu + Hamburger FAB
- * モバイルファースト: 展開座標のクランプを最大半径ベースで正確に
+ * UI は KKPortal（html 直下・viewport fixed）にマウント
+ * 座標は clientX / clientY（ビューポート）のみ使用
  */
 (function () {
   'use strict';
@@ -57,6 +58,15 @@
   var pieDisabled = false;
   var tapCount = 0, tapTimer = null;
 
+  function portalMount(node) {
+    if (window.KKPortal && typeof window.KKPortal.mount === 'function') {
+      return window.KKPortal.mount(node);
+    }
+    /* フォールバック: html 直下 */
+    document.documentElement.appendChild(node);
+    return node;
+  }
+
   function clearTextSelection() {
     try {
       var sel = window.getSelection && window.getSelection();
@@ -79,45 +89,43 @@
       clearTextSelection();
       setTimeout(clearTextSelection, 0);
       setTimeout(clearTextSelection, 50);
-      setTimeout(clearTextSelection, 120);
     });
   }
 
-  function viewportSize() {
-    var vv = window.visualViewport;
-    if (vv && vv.width && vv.height) {
-      return { w: vv.width, h: vv.height, ox: vv.offsetLeft || 0, oy: vv.offsetTop || 0 };
-    }
-    return { w: window.innerWidth, h: window.innerHeight, ox: 0, oy: 0 };
+  function viewport() {
+    if (window.KKPortal && window.KKPortal.viewport) return window.KKPortal.viewport();
+    return {
+      w: window.innerWidth || document.documentElement.clientWidth || 0,
+      h: window.innerHeight || document.documentElement.clientHeight || 0
+    };
   }
 
-  /** アイテム数に応じたシェル。モバイルは半径を抑えて画面内に収める */
   function shellConfig(itemCount) {
-    var vp = viewportSize();
+    var vp = viewport();
     var w = vp.w;
     var h = vp.h;
     var n = itemCount || 8;
     var maxR;
     if (w < 380) {
-      maxR = Math.min(100, Math.floor(Math.min(w, h) * 0.32));
+      maxR = Math.min(96, Math.floor(Math.min(w, h) * 0.30));
       return {
         caps: [Math.min(n, 6), 8, 12],
-        radii: [Math.round(maxR * 0.55), maxR, Math.round(maxR * 1.15)],
+        radii: [Math.round(maxR * 0.55), maxR, Math.round(maxR * 1.12)],
         margin: maxR + 36
       };
     }
     if (w < 480) {
-      maxR = Math.min(120, Math.floor(Math.min(w, h) * 0.34));
+      maxR = Math.min(112, Math.floor(Math.min(w, h) * 0.32));
       return {
         caps: [Math.min(n, 6), 9, 12],
-        radii: [Math.round(maxR * 0.55), maxR, Math.round(maxR * 1.2)],
+        radii: [Math.round(maxR * 0.55), maxR, Math.round(maxR * 1.18)],
         margin: maxR + 40
       };
     }
     if (w < 720) {
-      return { caps: [6, 9, 13], radii: [100, 155, 210], margin: 155 };
+      return { caps: [6, 9, 13], radii: [100, 150, 200], margin: 150 };
     }
-    return { caps: [6, 10, 14], radii: [118, 190, 250], margin: 175 };
+    return { caps: [6, 10, 14], radii: [118, 185, 245], margin: 170 };
   }
 
   function navigateWithDelay(href) {
@@ -204,8 +212,9 @@
     if (document.querySelector('.radial-menu-wrapper')) {
       menuEl = document.querySelector('.radial-menu-wrapper');
       itemsContainer = menuEl.querySelector('.rm-items') || menuEl;
-      orbitsContainer = menuEl.querySelector('.rm-orbits') || orbitsContainer;
-      coreBtn = menuEl.querySelector('.rm-core-btn') || coreBtn;
+      orbitsContainer = menuEl.querySelector('.rm-orbits');
+      coreBtn = menuEl.querySelector('.rm-core-btn');
+      portalMount(menuEl);
       return;
     }
     menuEl = document.createElement('div');
@@ -229,32 +238,37 @@
       else closeMenu();
     });
     menuEl.appendChild(coreBtn);
-    document.body.appendChild(menuEl);
+    portalMount(menuEl);
   }
 
-  /** タップ座標を画面内にクランプ（ラベル余白込み） */
-  function clampMenuOrigin(x, y, itemCount) {
-    var vp = viewportSize();
+  /**
+   * clientX/clientY はビューポート座標。
+   * ポータルが viewport fixed なので left/top にそのまま使える。
+   * スクロール量・文書高さは一切加算しない。
+   */
+  function clampMenuOrigin(clientX, clientY, itemCount) {
+    var vp = viewport();
     var cfg = shellConfig(itemCount);
-    var maxR = cfg.radii[Math.min(cfg.radii.length - 1, 1)] || cfg.radii[0];
+    var maxR = cfg.radii[Math.min(1, cfg.radii.length - 1)] || cfg.radii[0];
     var labelPad = 40;
     var m = maxR + labelPad;
-    var cx = typeof x === 'number' ? x : vp.w / 2;
-    var cy = typeof y === 'number' ? y : vp.h / 2;
-    // visualViewport オフセットを考慮（モバイル URL バー等）
-    var left = Math.max(m, Math.min(cx, vp.w - m)) + (vp.ox || 0);
-    var top = Math.max(m, Math.min(cy, vp.h - m)) + (vp.oy || 0);
-    // 極端に狭い画面では中央固定
-    if (vp.w < m * 2 + 8) left = vp.w / 2 + (vp.ox || 0);
-    if (vp.h < m * 2 + 8) top = vp.h / 2 + (vp.oy || 0);
+    var cx = typeof clientX === 'number' ? clientX : vp.w / 2;
+    var cy = typeof clientY === 'number' ? clientY : vp.h / 2;
+
+    var left = Math.max(m, Math.min(cx, vp.w - m));
+    var top = Math.max(m, Math.min(cy, vp.h - m));
+
+    if (vp.w < m * 2 + 8) left = vp.w / 2;
+    if (vp.h < m * 2 + 8) top = vp.h / 2;
+
     return { left: left, top: top };
   }
 
-  function openMenu(x, y) {
+  function openMenu(clientX, clientY) {
     if (!menuEl) createMenuDOM();
     clearTextSelectionSoon();
     var data = buildMenuData();
-    var origin = clampMenuOrigin(x, y, data.length);
+    var origin = clampMenuOrigin(clientX, clientY, data.length);
     menuEl.style.left = origin.left + 'px';
     menuEl.style.top = origin.top + 'px';
     menuEl.classList.add('active');
@@ -276,13 +290,16 @@
   }
 
   function mountFab() {
-    if (document.querySelector('.menu-fab')) return;
+    if (document.querySelector('.menu-fab')) {
+      portalMount(document.querySelector('.menu-fab'));
+      return;
+    }
     var fab = document.createElement('button');
     fab.type = 'button';
     fab.className = 'menu-fab';
     fab.setAttribute('aria-label', 'メニューを開く');
     fab.innerHTML = '☰';
-    document.body.appendChild(fab);
+    portalMount(fab);
     fab.addEventListener('click', function (e) {
       e.preventDefault();
       e.stopPropagation();
@@ -312,6 +329,7 @@
         return;
       }
 
+      /* clientX/Y のみ — pageX/Y・scrollY は使わない */
       startX = e.clientX;
       startY = e.clientY;
       tapCount++;
@@ -381,7 +399,8 @@
     window.addEventListener('resize', function () {
       if (isOpen && !menuStack.length) {
         var data = buildMenuData();
-        var origin = clampMenuOrigin(window.innerWidth / 2, window.innerHeight / 2, data.length);
+        var vp = viewport();
+        var origin = clampMenuOrigin(vp.w / 2, vp.h / 2, data.length);
         menuEl.style.left = origin.left + 'px';
         menuEl.style.top = origin.top + 'px';
         renderMenuLevel(data);
@@ -417,8 +436,9 @@
       '<div id="ham-title">九州研修 MENU</div>' +
       '<button type="button" class="ham-close" id="ham-close" aria-label="閉じる">✕</button></div>' +
       '<div id="ham-list"></div>';
-    document.body.appendChild(ov);
-    document.body.appendChild(panel);
+    /* ハンバーガー全画面は documentElement 直下（ポータル外でも fixed が効くよう html に） */
+    document.documentElement.appendChild(ov);
+    document.documentElement.appendChild(panel);
     document.getElementById('ham-close').addEventListener('click', closeHamburger);
     ov.addEventListener('click', closeHamburger);
   }
@@ -475,6 +495,7 @@
 
   function boot() {
     BASE = getBase();
+    if (window.KKPortal) window.KKPortal.ensure();
     createMenuDOM();
     initEvents();
     mountFab();

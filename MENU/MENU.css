@@ -1,12 +1,12 @@
 /* =========================================================
    kyushu-kenshu-2026 — Radial Menu + FAB
-   モバイルファースト位置調整
+   座標は #kk-ui-portal（viewport fixed）内の absolute 基準
    ========================================================= */
 :root {
   --rm-font: 'Noto Sans JP', system-ui, sans-serif;
   --rm-item-size: 50px;
   --rm-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
-  --rm-z: 2147482000;
+  --rm-z: 10;
   --fab-size: 52px;
   --fab-gap: 0.75rem;
 }
@@ -19,18 +19,20 @@
   }
 }
 
+/* ポータル内: absolute。left/top は clientX/clientY（ビューポート座標）そのまま */
 .radial-menu-wrapper {
-  position: fixed !important;
+  position: absolute !important;
   top: 0;
   left: 0;
   width: 0;
   height: 0;
-  z-index: var(--rm-z) !important;
+  z-index: var(--rm-z);
   pointer-events: none;
   visibility: hidden;
   opacity: 0;
   transition: visibility 0s linear 0.28s, opacity 0.18s ease-out;
-  /* transform 原点は left/top の点 */
+  transform: none !important;
+  filter: none !important;
 }
 .radial-menu-wrapper.active {
   pointer-events: auto;
@@ -182,12 +184,12 @@
   border-color: color-mix(in srgb, var(--rt-accent, #c9a227) 90%, #fff);
 }
 
-/* FAB: 右下・safe-area 対応・近傍バッジと分離 */
+/* FAB: ポータル内 absolute → 常にビューポート右下 */
 .menu-fab {
-  position: fixed !important;
+  position: absolute !important;
   right: max(var(--fab-gap), env(safe-area-inset-right, 0px));
   bottom: max(var(--fab-gap), env(safe-area-inset-bottom, 0px));
-  z-index: 2147481000 !important;
+  z-index: 5;
   width: var(--fab-size);
   height: var(--fab-size);
   border-radius: 12px;
@@ -209,6 +211,9 @@
   justify-content: center;
   padding: 0;
   margin: 0;
+  pointer-events: auto;
+  transform: none;
+  filter: none;
 }
 .menu-fab:hover,
 .menu-fab:active {
@@ -217,7 +222,25 @@
   color: var(--rt-bg, #0b0e14);
 }
 
-/* 本文が FAB に隠れないよう下余白 */
+/* 近傍バッジ（ポータル内） */
+.kk-near-badge {
+  position: absolute !important;
+  z-index: 4;
+  pointer-events: auto;
+  max-width: min(17.5rem, calc(100vw - 5.5rem));
+  padding: 0.6rem 0.85rem;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--rt-card, #151a24) 94%, transparent);
+  border: 1px solid color-mix(in srgb, var(--rt-accent, #c9a227) 45%, transparent);
+  color: var(--rt-text, #e8eef7);
+  font-size: 0.76rem;
+  line-height: 1.45;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.32);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* 本文が FAB に隠れない */
 body {
-  padding-bottom: calc(var(--fab-size) + var(--fab-gap) + env(safe-area-inset-bottom, 0px) + 0.5rem);
+  padding-bottom: calc(var(--fab-size) + var(--fab-gap) + env(safe-area-inset-bottom, 0px) + 0.75rem);
 }

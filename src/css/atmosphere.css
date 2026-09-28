@@ -1,6 +1,8 @@
 /* =========================================================
    kyushu-kenshu-2026 — atmosphere.css
-   天気・時間帯連動レイヤー（reitansai atmosphere を九州研修向けに移植）
+   天気・時間帯連動レイヤー
+   ※ body に filter を付けないこと（position:fixed の包含ブロックが
+      body になり、FAB・放射状メニューの座標が文書高さ基準になる）
    ========================================================= */
 
 .rt-atmosphere {
@@ -9,7 +11,7 @@
   pointer-events: none;
   z-index: 0;
   overflow: hidden;
-  transition: opacity 1.4s ease, filter 2s ease;
+  transition: opacity 1.4s ease;
 }
 .rt-atmosphere::before,
 .rt-atmosphere::after {
@@ -211,68 +213,51 @@
   97% { filter: brightness(1); }
 }
 
-/* 時間帯 body オーバーレイ（reitansai同様） */
-html[data-period="dawn"] body::before {
-  content: '';
+/* 時間帯オーバーレイ — body ではなく専用レイヤー（filter 問題回避） */
+.rt-period-overlay {
   position: fixed;
   inset: 0;
   pointer-events: none;
   z-index: 0;
+  transition: background 1.4s ease, opacity 1.4s ease;
+}
+html[data-period="dawn"] .rt-period-overlay {
   background:
     radial-gradient(ellipse 95% 58% at 50% -18%, rgba(255,140,55,.38), transparent 48%),
     radial-gradient(ellipse 55% 42% at 92% 82%, rgba(255,95,75,.16), transparent 45%);
 }
-html[data-period="morning"] body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
+html[data-period="morning"] .rt-period-overlay {
   background:
     radial-gradient(ellipse 88% 52% at 28% -12%, rgba(90,200,255,.32), transparent 50%),
     radial-gradient(ellipse 42% 36% at 88% 92%, rgba(70,220,175,.12), transparent 45%);
 }
-html[data-period="noon"] body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
+html[data-period="noon"] .rt-period-overlay {
   background: radial-gradient(ellipse 105% 62% at 50% -22%, rgba(255,230,145,.26), transparent 48%);
 }
-html[data-period="afternoon"] body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
+html[data-period="afternoon"] .rt-period-overlay {
   background:
     radial-gradient(ellipse 92% 58% at 72% -12%, rgba(255,155,45,.35), transparent 46%),
     radial-gradient(ellipse 52% 42% at 8% 100%, rgba(255,95,35,.14), transparent 45%);
 }
-html[data-period="dusk"] body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
+html[data-period="dusk"] .rt-period-overlay {
   background:
     radial-gradient(ellipse 98% 58% at 58% -14%, rgba(195,70,220,.36), transparent 48%),
     radial-gradient(ellipse 58% 48% at 12% 92%, rgba(255,85,115,.16), transparent 45%);
 }
-html[data-period="night"] body::before,
-html[data-period="late"] body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
+html[data-period="night"] .rt-period-overlay,
+html[data-period="late"] .rt-period-overlay {
   background:
     radial-gradient(ellipse 82% 52% at 78% -6%, rgba(70,95,220,.32), transparent 46%),
     radial-gradient(ellipse 42% 32% at 18% 72%, rgba(55,35,155,.14), transparent 45%);
 }
 
-/* ヘッダー微調整 */
+/* 天気の色調整は body ではなく atmosphere レイヤーへ（fixed 保護） */
+html[data-weather="rain"] .rt-atmosphere,
+html[data-weather="rain-heavy"] .rt-atmosphere { filter: saturate(.92); }
+html[data-weather="fog"] .rt-atmosphere { filter: saturate(.78) contrast(.96); }
+html[data-weather="snow"] .rt-atmosphere { filter: saturate(.88) brightness(1.03); }
+html[data-weather="storm"] .rt-atmosphere { filter: saturate(1.08) contrast(1.04); }
+
 html[data-period="night"] .site-header,
 html[data-period="late"] .site-header {
   background: color-mix(in srgb, var(--rt-bg) 92%, #000);
@@ -283,14 +268,8 @@ html[data-weather="fog"] .site-header {
 }
 
 body, .card, .site-header, .site-footer, .btn {
-  transition: background-color 1.4s ease, color 1.4s ease, border-color 1.4s ease, box-shadow 1.4s ease, filter 1.4s ease;
+  transition: background-color 1.4s ease, color 1.4s ease, border-color 1.4s ease, box-shadow 1.4s ease;
 }
-
-html[data-weather="rain"] body,
-html[data-weather="rain-heavy"] body { filter: saturate(.92); }
-html[data-weather="fog"] body { filter: saturate(.78) contrast(.96); }
-html[data-weather="snow"] body { filter: saturate(.88) brightness(1.03); }
-html[data-weather="storm"] body { filter: saturate(1.08) contrast(1.04); }
 
 @media (prefers-reduced-motion: reduce) {
   .rt-atmosphere::before,
