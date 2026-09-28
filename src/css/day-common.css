@@ -1,0 +1,5 @@
+/* 日別ページ共通 */
+.day-nav a.is-active {
+  border-color: var(--rt-accent);
+  background: var(--rt-accent-soft);
+}
