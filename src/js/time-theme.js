@@ -1,8 +1,7 @@
 /**
  * kyushu-kenshu-2026 — time-theme.js
- * 時間帯・天気連動（テーマコントロール連携）
- * theme-control 未読込ページでは自動で読み込む
- * Open-Meteo / 外部リンクは HTTPS のみ（http への誤変換禁止）
+ * 時間帯・天気連動
+ * body に filter を付けない（fixed 座標保護）
  */
 (function () {
   'use strict';
@@ -57,21 +56,6 @@
     '&timezone=Asia%2FTokyo';
 
   var lastWeather = null;
-
-  var STATIC_DARK = {
-    hue: 210, bg: '#0b0e14', bgSoft: '#12161f', card: '#151a24', cardHover: '#1c2330',
-    text: '#e8eef7', textMuted: '#9aa8bc', accent: '#c9a227',
-    accentSoft: 'rgba(201, 162, 39, 0.18)', border: 'rgba(180, 200, 230, 0.14)',
-    glow: 'rgba(100, 180, 255, 0.22)', lab: '#5ec8c8', grain: 0.04,
-    period: 'static', weather: 'off', isDay: false, temp: null
-  };
-  var STATIC_CLASSIC = {
-    hue: 36, bg: '#e4dcc8', bgSoft: '#ddd4bc', card: '#f0e9d8', cardHover: '#f5efe2',
-    text: '#2a2418', textMuted: '#5c5346', accent: '#8a6b1e',
-    accentSoft: 'rgba(138, 107, 30, 0.16)', border: 'rgba(60, 48, 28, 0.16)',
-    glow: 'rgba(180, 140, 60, 0.14)', lab: '#3d6b5c', grain: 0.02,
-    period: 'static', weather: 'off', isDay: true, temp: null
-  };
 
   function currentScheme() {
     if (window.KKThemeControl && typeof window.KKThemeControl.getScheme === 'function') {
@@ -281,7 +265,7 @@
       }
       var layer = document.getElementById('rt-atmosphere');
       if (layer) { layer.className = 'rt-atmosphere wx-off'; layer.style.display = 'none'; }
-      return scheme === 'classic' ? STATIC_CLASSIC : STATIC_DARK;
+      return;
     }
     var j = getJST();
     var period = periodFromHours(j.hours);
@@ -308,12 +292,19 @@
   }
 
   function ensureAtmosphere() {
+    if (!document.getElementById('rt-period-overlay')) {
+      var ov = document.createElement('div');
+      ov.id = 'rt-period-overlay';
+      ov.className = 'rt-period-overlay';
+      ov.setAttribute('aria-hidden', 'true');
+      document.body.insertBefore(ov, document.body.firstChild);
+    }
     if (document.getElementById('rt-atmosphere')) return;
     var el = document.createElement('div');
     el.id = 'rt-atmosphere';
     el.className = 'rt-atmosphere';
     el.setAttribute('aria-hidden', 'true');
-    document.body.appendChild(el);
+    document.body.insertBefore(el, document.body.firstChild);
   }
 
   function bootCore() {

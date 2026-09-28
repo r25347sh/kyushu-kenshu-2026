@@ -1,7 +1,6 @@
 /**
  * kyushu-kenshu-2026 — geolocation.js
- * 現在地取得 → 最寄り訪問地・日程ハイライト
- * 近傍バッジはヘッダー下（モバイルで FAB と重ならない位置）
+ * 現在地 → 最寄り訪問地バッジ（ポータル内・常にビューポート追従）
  */
 (function () {
   'use strict';
@@ -43,11 +42,25 @@
     });
   }
 
-  function headerBottom() {
+  function headerBottomInViewport() {
     var h = document.querySelector('.site-header');
     if (!h) return 56;
     var r = h.getBoundingClientRect();
+    /* sticky ヘッダーの下端（ビューポート座標） */
     return Math.max(48, Math.round(r.bottom));
+  }
+
+  function placeBadge(el) {
+    var top = headerBottomInViewport() + 8;
+    var left = 12;
+    try {
+      var safeL = getComputedStyle(document.documentElement).getPropertyValue('env(safe-area-inset-left)');
+      /* env は style で直接書く */
+    } catch (e) {}
+    el.style.top = top + 'px';
+    el.style.left = 'max(0.75rem, env(safe-area-inset-left, 0px))';
+    el.style.right = 'auto';
+    el.style.bottom = 'auto';
   }
 
   function showNearBadge(result) {
@@ -59,27 +72,6 @@
     el.id = 'kk-near-badge';
     el.className = 'kk-near-badge';
     el.setAttribute('role', 'status');
-
-    var top = headerBottom() + 8;
-    el.style.cssText =
-      'position:fixed;' +
-      'top:' + top + 'px;' +
-      'left:max(0.75rem, env(safe-area-inset-left));' +
-      'right:auto;' +
-      'bottom:auto;' +
-      'z-index:95;' +
-      'max-width:min(17.5rem, calc(100vw - 5.5rem));' +
-      'padding:0.6rem 0.85rem;' +
-      'border-radius:10px;' +
-      'background:color-mix(in srgb, var(--rt-card, #151a24) 94%, transparent);' +
-      'border:1px solid color-mix(in srgb, var(--rt-accent, #c9a227) 45%, transparent);' +
-      'color:var(--rt-text, #e8eef7);' +
-      'font-size:0.76rem;' +
-      'line-height:1.45;' +
-      'box-shadow:0 8px 24px rgba(0,0,0,0.32);' +
-      'backdrop-filter:blur(12px);' +
-      '-webkit-backdrop-filter:blur(12px);' +
-      'pointer-events:auto;';
 
     var kmStr = result.km < 1
       ? Math.round(result.km * 1000) + ' m'
@@ -98,7 +90,14 @@
       linkHtml +
       '<br><button type="button" id="kk-near-close" class="kk-near-close">閉じる</button>';
 
-    document.body.appendChild(el);
+    placeBadge(el);
+
+    if (window.KKPortal && window.KKPortal.mount) {
+      window.KKPortal.mount(el);
+    } else {
+      document.documentElement.appendChild(el);
+      el.style.position = 'fixed';
+    }
 
     var closeBtn = document.getElementById('kk-near-close');
     if (closeBtn) {
@@ -114,14 +113,17 @@
       window.KKTheme.setCoords(result.loc.lat, result.loc.lon);
     }
 
-    // ヘッダー高さ変化に追従（回転など）
-    window.addEventListener('resize', function onR() {
+    /* スクロール／回転でもヘッダー下に張り付く（ビューポート追従） */
+    function onMove() {
       if (!document.getElementById('kk-near-badge')) {
-        window.removeEventListener('resize', onR);
+        window.removeEventListener('scroll', onMove, true);
+        window.removeEventListener('resize', onMove);
         return;
       }
-      el.style.top = (headerBottom() + 8) + 'px';
-    });
+      placeBadge(el);
+    }
+    window.addEventListener('scroll', onMove, { passive: true, capture: true });
+    window.addEventListener('resize', onMove);
   }
 
   function onSuccess(pos) {
@@ -129,13 +131,10 @@
     var lon = pos.coords.longitude;
     try {
       sessionStorage.setItem('kk-geo', JSON.stringify({
-        t: Date.now(),
-        lat: lat,
-        lon: lon
+        t: Date.now(), lat: lat, lon: lon
       }));
     } catch (e) {}
-    var result = findNearest(lat, lon);
-    showNearBadge(result);
+    showNearBadge(findNearest(lat, lon));
   }
 
   function onError() {
