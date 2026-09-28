@@ -1,11 +1,51 @@
 /**
  * kyushu-kenshu-2026 — time-theme.js
  * 時間帯・天気連動（テーマコントロール連携）
- * デフォルト座標: 別府付近。geolocation で更新可。
- * Open-Meteo は HTTPS のみ使用（http への誤変換禁止）
+ * theme-control 未読込ページでは自動で読み込む
+ * Open-Meteo / 外部リンクは HTTPS のみ（http への誤変換禁止）
  */
 (function () {
   'use strict';
+
+  function getBase() {
+    if (window.KK && window.KK.BASE) return window.KK.BASE;
+    var p = location.pathname || '';
+    if (p.indexOf('/kyushu-kenshu-2026/') === 0 || p === '/kyushu-kenshu-2026') return '/kyushu-kenshu-2026/';
+    if (location.protocol === 'file:') {
+      var depth = 0;
+      if (p.match(/\/day[1-4]\//) || p.match(/\/(packing|rules)\//)) depth = 1;
+      return depth === 1 ? '../' : './';
+    }
+    return '/kyushu-kenshu-2026/';
+  }
+
+  function ensureThemeAssets(done) {
+    var base = getBase();
+    if (!document.querySelector('link[href*="theme-selector.css"]')) {
+      var link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = base + 'src/css/theme-selector.css';
+      document.head.appendChild(link);
+    }
+    if (window.KKThemeControl) {
+      done();
+      return;
+    }
+    var existing = document.querySelector('script[src*="theme-control.js"]');
+    if (existing) {
+      var wait = setInterval(function () {
+        if (window.KKThemeControl) { clearInterval(wait); done(); }
+      }, 20);
+      setTimeout(function () { clearInterval(wait); done(); }, 2500);
+      return;
+    }
+    var s = document.createElement('script');
+    s.src = base + 'src/js/theme-control.js';
+    s.onload = function () { done(); };
+    s.onerror = function () { done(); };
+    document.head.appendChild(s);
+  }
+
   var ROOT = document.documentElement;
   var BODY = document.body;
   var LAT = 33.2795;
@@ -241,7 +281,6 @@
       }
       var layer = document.getElementById('rt-atmosphere');
       if (layer) { layer.className = 'rt-atmosphere wx-off'; layer.style.display = 'none'; }
-      // CSS の data-color-scheme に任せる（クラシック固定色）
       return scheme === 'classic' ? STATIC_CLASSIC : STATIC_DARK;
     }
     var j = getJST();
@@ -277,7 +316,7 @@
     document.body.appendChild(el);
   }
 
-  function boot() {
+  function bootCore() {
     ensureAtmosphere();
     try {
       var cached = sessionStorage.getItem('kk-wx');
@@ -296,6 +335,12 @@
     document.addEventListener('kk-theme-change', function () {
       tickTime();
       if (atmosphereEnabled()) fetchWeather();
+    });
+  }
+
+  function boot() {
+    ensureThemeAssets(function () {
+      bootCore();
     });
   }
 

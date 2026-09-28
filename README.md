@@ -26,29 +26,30 @@ https://r25347sh.github.io/kyushu-kenshu-2026/
 - **放射状メニュー**（長押し / トリプルタップ）＋ **ハンバーガーFAB**（reitansai方式）
 - **天気・時間帯連動** atmosphere（Open-Meteo、座標は現在地に応じて更新）
 - **現在地連動**：位置情報許可で最寄り訪問地バッジ＋日程ナビのハイライト
+- **テーマ切替**：ダーク / クラシック / システム（デフォルト：システム）＋時間・天気連動のON/OFF
 - モバイルファースト・reduced-motion対応
-- 各ページ専用CSS/JS + `default.css` / `default.js`
+
+## 外部リンク（すべて HTTPS）
+
+- Open-Meteo API: `https://api.open-meteo.com/...`
+- Google Fonts: `https://fonts.googleapis.com/...`
+- 宇佐神宮公式（参考）: `https://www.usajinguu.com/`
+
+※ http を https に誤変換しないこと（逆も同様）。
 
 ## 技術
 
 - 純粋 HTML / CSS / JS（ビルド不要）
 - ベースパス: `/kyushu-kenshu-2026/`
-- 位置データ: `src/data/locations.js`
 
 ## 開発フェーズ
 
-- [x] Phase 0: リポジトリ作成・sources・骨格
-- [x] Phase 1: 共通レイアウト・atmosphere・MENU
-- [x] Phase 2: 日別ページ・packing/rules
-- [x] Phase 3: スポット詳細充実・現在地ハイライト・デザイン磨き
-- [ ] Phase 4: GitHub Pages 有効化・最終調整・必要に応じた追加コンテンツ
+- [x] Phase 0〜3
+- [x] Phase 4: テーマ切替・Pages 設定・リンク確認
 
-## ローカル確認
+## GitHub Pages
 
-GitHub Pages の base path を考慮して相対パスで動作します。  
-`file://` でもメニューの深さ計算に対応しています。
-
-位置情報は HTTPS 環境（Pages 上）で正しく動作します。
+Settings → Pages → Source: **GitHub Actions** を選択するとデプロイされます。
 
 ---
 
