@@ -3,6 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="dark light">
+  <script>
+  (function(){try{
+    var m=localStorage.getItem('kk-color-mode');
+    if(m==='light')m='classic';
+    if(m!=='dark'&&m!=='classic'&&m!=='system')m='system';
+    var dark=window.matchMedia&&window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var scheme=m==='classic'?'classic':(m==='dark'||(m==='system'&&dark)?'dark':'classic');
+    var r=document.documentElement;
+    r.setAttribute('data-color-mode',m);
+    r.setAttribute('data-color-scheme',scheme);
+    r.style.colorScheme=scheme==='dark'?'dark':'light';
+  }catch(e){}})();
+  </script>
   <meta name="description" content="麗澤高等学校 5年 九州研修旅行（2026年10月20日〜23日）専用サイト。日程・訪問地・天気連動デザイン。">
   <title>ホーム | 九州研修旅行 2026 麗澤高等学校</title>
   <link rel="stylesheet" href="src/css/default.css">
