@@ -7,6 +7,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Shippori+Mincho:wght@500;700&display=swap');
 
 :root {
+  color-scheme: light dark;
   --kk-font-sans: 'Noto Sans JP', system-ui, -apple-system, sans-serif;
   --kk-font-serif: 'Shippori Mincho', 'Hiragino Mincho ProN', serif;
   --kk-radius: 12px;
@@ -27,6 +28,9 @@
   --rt-lab: #5ec8c8;
   --rt-grain: 0.04;
 }
+
+html[data-color-scheme="dark"] { color-scheme: dark; }
+html[data-color-scheme="classic"] { color-scheme: light; }
 
 *, *::before, *::after { box-sizing: border-box; }
 
