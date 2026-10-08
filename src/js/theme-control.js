@@ -30,7 +30,12 @@
   }
 
   function systemPrefersDark() {
-    return !window.matchMedia || window.matchMedia('(prefers-color-scheme: dark)').matches;
+    try {
+      if (!window.matchMedia) return false;
+      return !!window.matchMedia('(prefers-color-scheme: dark)').matches;
+    } catch (e) {
+      return false;
+    }
   }
 
   function resolveScheme(mode) {
@@ -220,6 +225,19 @@
     syncUI();
   }
 
+  function reapplySystemIfNeeded() {
+    if (state.mode !== 'system') return;
+    var next = resolveScheme('system');
+    var cur = ROOT.getAttribute('data-color-scheme');
+    if (cur !== next) {
+      applyShell(state.mode, state.atmosphere, true);
+      notifyThemeEngine();
+    } else {
+      /* scheme は同じでも color-scheme / 属性を再同期 */
+      applyShell(state.mode, state.atmosphere, false);
+    }
+  }
+
   if (window.matchMedia) {
     try {
       var mq = window.matchMedia('(prefers-color-scheme: dark)');
@@ -234,7 +252,17 @@
     } catch (e) {}
   }
 
+  /* bfcache 復帰・タブ復帰時にシステム設定を再読込（iOS Safari 対策） */
+  window.addEventListener('pageshow', function () {
+    reapplySystemIfNeeded();
+  });
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) reapplySystemIfNeeded();
+  });
+
   function boot() {
+    /* ヘッドの早期スクリプト後でもう一度確定 */
+    applyShell(state.mode, state.atmosphere, false);
     injectUI();
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
