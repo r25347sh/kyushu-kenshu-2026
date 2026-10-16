@@ -16,7 +16,7 @@
     if (location.protocol === 'file:') {
       var depth = 0;
       if (p.match(/\/day[1-4]\//)) depth = 1;
-      if (p.match(/\/(packing|rules)\//)) depth = 1;
+      if (p.match(/\/(packing|rules|chat)\//)) depth = 1;
       return depth === 1 ? '../' : './';
     }
     return '/kyushu-kenshu-2026/';
