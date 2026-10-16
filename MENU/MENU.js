@@ -1,6 +1,6 @@
 /**
  * kyushu-kenshu-2026 Radial Menu + Hamburger FAB
- * アニメ強化: スタッガー展開・閉じアニメ・スクラム・クラシック対応色は CSS 変数
+ * 改善: チャット追加 / Day4スポット拡充 / ラベル安定 / キーボード操作
  */
 (function () {
   'use strict';
@@ -10,7 +10,7 @@
     if (p.indexOf('/kyushu-kenshu-2026/') === 0 || p === '/kyushu-kenshu-2026') return '/kyushu-kenshu-2026/';
     if (location.protocol === 'file:') {
       var depth = 0;
-      if (p.match(/\/day[1-4]\//) || p.match(/\/(packing|rules)\//)) depth = 1;
+      if (p.match(/\/day[1-4]\//) || p.match(/\/(packing|rules|chat)\//)) depth = 1;
       return depth === 1 ? '../' : './';
     }
     return '/kyushu-kenshu-2026/';
@@ -38,12 +38,19 @@
         label: 'スポット', icon: '📍', items: [
           { label: '宇佐神宮', icon: '⛩️', url: url('day1/usa-jingu.html') },
           { label: '青の洞門', icon: '🚪', url: url('day1/aono-domon.html') },
+          { label: '中津記念館', icon: '🏛️', url: url('day1/nakatsu.html') },
           { label: '高千穂', icon: '🏞️', url: url('day2/takachiho.html') },
           { label: '知覧', icon: '✈️', url: url('day3/chiran.html') },
           { label: '長崎鼻', icon: '🌊', url: url('day3/nagasaki-hana.html') },
-          { label: '鹿児島', icon: '🌋', url: url('day4/kagoshima.html') }
+          { label: '鹿児島自由行動', icon: '🌋', url: url('day4/kagoshima.html') },
+          { label: '西郷隆盛像', icon: '🗿', url: url('day4/kagoshima.html#saigo') },
+          { label: 'Sweet William', icon: '🍮', url: url('day4/kagoshima.html#sweet-william') },
+          { label: '照国神社', icon: '⛩️', url: url('day4/kagoshima.html#terukuni') },
+          { label: 'むじゃき', icon: '🐻', url: url('day4/kagoshima.html#mujaki') },
+          { label: '黒の極み', icon: '🍲', url: url('day4/kagoshima.html#kuro') }
         ]
       },
+      { label: 'チャット', icon: '💬', url: url('chat/index.html') },
       { label: '持ち物', icon: '🧳', url: url('packing/index.html') },
       { label: 'ルール', icon: '📋', url: url('rules/index.html') }
     ];
@@ -108,7 +115,6 @@
     var h = vp.h;
     var n = itemCount || 8;
     var maxR;
-    /* 項目サイズ拡大に合わせて半径を広げ、重なりを防ぐ */
     if (w < 380) {
       maxR = Math.min(118, Math.floor(Math.min(w, h) * 0.34));
       return {
@@ -181,7 +187,6 @@
       btn.innerHTML = data.item.icon || '•';
       btn.style.setProperty('--x', data.x + 'px');
       btn.style.setProperty('--y', data.y + 'px');
-      /* 時計回りに広がるスタッガー */
       btn.style.transitionDelay = (0.04 + index * 0.038) + 's';
       btn.addEventListener('click', function (e) {
         e.preventDefault();
@@ -340,7 +345,6 @@
 
   function shouldIgnoreGestureTarget(t) {
     if (!t || !t.closest) return true;
-    /* UI 操作中はジェスチャを取らない（リンク上でもトリプルタップは許可） */
     return !!(
       t.closest('.menu-fab') ||
       t.closest('.radial-menu-wrapper') ||
@@ -349,6 +353,8 @@
       t.closest('#ham-overlay') ||
       t.closest('#kk-near-badge') ||
       t.closest('.rt-theme-ctrl') ||
+      t.closest('#kk-chat-fab') ||
+      t.closest('#kk-chat-panel') ||
       t.closest('input') ||
       t.closest('textarea') ||
       t.closest('select') ||
@@ -371,7 +377,6 @@
   }
 
   function initEvents() {
-    /* トリプルタップ／長押し直後の click・pointerup によるページ遷移を防ぐ */
     document.addEventListener('click', function (e) {
       if (suppressIfGesture(e)) return;
     }, true);
