@@ -1,6 +1,7 @@
 /**
  * 九州研修旅行 2026 — 訪問地座標・メタデータ
  * 距離計算・現在地ハイライト用
+ * 更新: 2026-10-16 三班トーク・計画書反映（天文館周辺スポット追加）
  */
 window.KK_LOCATIONS = [
   {
@@ -102,12 +103,66 @@ window.KK_LOCATIONS = [
   },
   {
     id: 'kagoshima',
-    name: '鹿児島',
+    name: '鹿児島（自由行動）',
     day: 4,
     lat: 31.5966,
     lon: 130.5571,
     path: 'day4/kagoshima.html',
-    summary: '自由行動'
+    summary: '班別自由行動 09:30〜14:20'
+  },
+  {
+    id: 'saigo-statue',
+    name: '西郷隆盛像',
+    day: 4,
+    lat: 31.5953,
+    lon: 130.5535,
+    path: 'day4/kagoshima.html',
+    summary: '天文館近く・記念撮影スポット'
+  },
+  {
+    id: 'terukuni',
+    name: '照国神社',
+    day: 4,
+    lat: 31.5948,
+    lon: 130.5501,
+    path: 'day4/kagoshima.html',
+    summary: '島津斉彬公を祀る・お参り'
+  },
+  {
+    id: 'sweet-william',
+    name: 'Sweet William Cafe',
+    day: 4,
+    lat: 31.5863,
+    lon: 130.5563,
+    path: 'day4/kagoshima.html',
+    summary: 'マフィン・プリン（樋之口町）'
+  },
+  {
+    id: 'mujaki',
+    name: '天文館むじゃき',
+    day: 4,
+    lat: 31.5892,
+    lon: 130.5560,
+    path: 'day4/kagoshima.html',
+    summary: '白熊（しろくま）発祥の店'
+  },
+  {
+    id: 'tenmonkan',
+    name: '天文館通り',
+    day: 4,
+    lat: 31.5900,
+    lon: 130.5555,
+    path: 'day4/kagoshima.html',
+    summary: 'お土産・食べ歩きエリア'
+  },
+  {
+    id: 'kuro-no-kiwami',
+    name: '黒の極み（しゃぶしゃぶ）',
+    day: 4,
+    lat: 31.5895,
+    lon: 130.5545,
+    path: 'day4/kagoshima.html',
+    summary: '黒豚しゃぶ候補（あぢもり代替）'
   },
   {
     id: 'kagoshima-airport',
