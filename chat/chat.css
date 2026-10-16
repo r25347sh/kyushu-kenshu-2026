@@ -1,0 +1,89 @@
+/* 九州研修 チャット UI */
+.kk-chat-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: flex-end;
+  margin-bottom: 0.75rem;
+}
+.kk-chat-toolbar label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.kk-chat-toolbar input,
+.kk-chat-toolbar select {
+  min-height: 40px;
+  padding: 0.4rem 0.65rem;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--rt-border, #444) 80%, transparent);
+  background: var(--rt-surface, #1a2230);
+  color: var(--rt-text, #e8eef7);
+  font: inherit;
+}
+.kk-messages {
+  height: min(50vh, 420px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 0.75rem;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--rt-surface, #151a24) 92%, #000);
+  border: 1px solid color-mix(in srgb, var(--rt-accent, #c9a227) 30%, transparent);
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.kk-bubble {
+  max-width: 88%;
+  padding: 0.55rem 0.75rem;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--rt-surface, #1a2230) 95%, #fff);
+  border: 1px solid color-mix(in srgb, var(--rt-border, #333) 60%, transparent);
+  align-self: flex-start;
+}
+.kk-bubble.mine {
+  align-self: flex-end;
+  background: color-mix(in srgb, var(--rt-accent, #c9a227) 28%, var(--rt-surface, #1a2230));
+  border-color: color-mix(in srgb, var(--rt-accent, #c9a227) 55%, transparent);
+}
+.kk-bubble .meta {
+  font-size: 0.7rem;
+  opacity: 0.75;
+  margin-bottom: 0.2rem;
+}
+.kk-bubble .text {
+  font-size: 0.92rem;
+  line-height: 1.45;
+  word-break: break-word;
+}
+.kk-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+.kk-form input {
+  flex: 1;
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--rt-border, #444) 80%, transparent);
+  background: var(--rt-surface, #1a2230);
+  color: var(--rt-text, #e8eef7);
+  font: inherit;
+}
+.kk-empty {
+  text-align: center;
+  opacity: 0.7;
+  font-size: 0.9rem;
+  padding: 1.5rem 0.5rem;
+}
+#kk-chat-gate .ok {
+  color: var(--rt-lab, #5ec8c8);
+  font-weight: 700;
+}
+#kk-chat-gate .ng {
+  color: #e07070;
+  font-weight: 700;
+}
