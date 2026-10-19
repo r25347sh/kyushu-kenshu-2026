@@ -2,6 +2,7 @@
  * 九州研修旅行 2026 — 期間限定チャット
  * 有効: 2026-10-20 00:00 JST 〜 2026-10-23 23:59:59 JST
  * 方式: localStorage 履歴 + PeerJS ルーム同期（G⁵ Portal WebRTC 系を模倣）
+ * ルーム: 三班（sanban）固定
  */
 (function () {
   'use strict';
@@ -12,11 +13,12 @@
   var PREVIEW_FROM = Date.UTC(2026, 9, 15, 15, 0, 0); /* 10/16 00:00 JST */
 
   var STORAGE_KEY = 'kk-chat-v1';
+  var FIXED_ROOM = 'sanban';
   var peer = null;
   var conns = {};
   var myId = null;
   var nick = '';
-  var room = 'sanban';
+  var room = FIXED_ROOM;
   var joined = false;
 
   function nowJst() {
@@ -36,10 +38,10 @@
 
   function escapeHtml(s) {
     return String(s == null ? '' : s)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;');
+      .replace(/&/g, '&')
+      .replace(/</g, '<')
+      .replace(/>/g, '>')
+      .replace(/"/g, '"');
   }
 
   function formatTime(ts) {
@@ -199,9 +201,8 @@
 
   function join() {
     var nickEl = document.getElementById('kk-nick');
-    var roomEl = document.getElementById('kk-room');
     nick = (nickEl.value || '').trim() || '匿名';
-    room = roomEl.value || 'sanban';
+    room = FIXED_ROOM;
     try {
       localStorage.setItem('kk-chat-nick', nick);
       localStorage.setItem('kk-chat-room', room);
@@ -211,7 +212,6 @@
     document.getElementById('kk-leave').hidden = false;
     document.getElementById('kk-join').hidden = true;
     nickEl.disabled = true;
-    roomEl.disabled = true;
     renderMessages();
     startPeer();
   }
@@ -231,7 +231,6 @@
     document.getElementById('kk-leave').hidden = true;
     document.getElementById('kk-join').hidden = false;
     document.getElementById('kk-nick').disabled = false;
-    document.getElementById('kk-room').disabled = false;
     setConnStatus('');
   }
 
@@ -267,16 +266,14 @@
     }
 
     var label = isTripDays()
-      ? '<span class="ok">本旅行期間中 — チャット開放中</span>'
+      ? '<span class="ok">本旅行期間中 — 三班チャット開放中</span>'
       : '<span class="ok">プレビュー開放中（本旅行: 10/20〜10/23）</span>';
-    status.innerHTML = label + '<br>ニックネームを入れてルームに入室してください。';
+    status.innerHTML = label + '<br>ニックネームを入れて入室してください（ルームは三班固定）。';
     ui.hidden = false;
 
     try {
       var n = localStorage.getItem('kk-chat-nick');
-      var r = localStorage.getItem('kk-chat-room');
       if (n) document.getElementById('kk-nick').value = n;
-      if (r) document.getElementById('kk-room').value = r;
     } catch (e) {}
 
     document.getElementById('kk-join').addEventListener('click', join);
