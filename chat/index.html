@@ -20,10 +20,10 @@
   </header>
 
   <main class="site-main">
-    <h1>班チャット</h1>
+    <h1>三班チャット</h1>
     <p class="text-muted" style="font-size:0.9rem;">
       研修期間（2026/10/20〜10/23）のみ利用可能。G⁵ Portal 風の簡易チャットです。
-      ニックネームを決めてルームに入ると、同じルームの端末同士でリアルタイム会話できます（PeerJS）。
+      ニックネームを決めて入室すると、三班メンバー同士でリアルタイム会話できます（PeerJS）。
     </p>
 
     <div id="kk-chat-gate" class="card">
@@ -36,14 +36,7 @@
           ニックネーム
           <input type="text" id="kk-nick" maxlength="16" placeholder="例: はる" autocomplete="nickname">
         </label>
-        <label>
-          ルーム
-          <select id="kk-room">
-            <option value="sanban">三班</option>
-            <option value="global">全体</option>
-            <option value="g3">G組</option>
-          </select>
-        </label>
+        <span class="kk-room-label text-muted" style="font-size:0.85rem;align-self:flex-end;padding-bottom:0.4rem;">ルーム: 三班</span>
         <button type="button" id="kk-join" class="btn">入室</button>
         <button type="button" id="kk-leave" class="btn" hidden>退室</button>
       </div>
@@ -58,7 +51,7 @@
     <section class="card mt-3">
       <h2>使い方・注意</h2>
       <ul class="clean">
-        <li>同じルーム名・同じ期間内でのみ同期します</li>
+        <li>ルームは<strong>三班</strong>固定です（他ルームはありません）</li>
         <li>端末をまたいで使う場合は PeerJS（インターネット）経由で接続します</li>
         <li>個人情報・誹謗中傷・校則違反の内容は書かないでください</li>
         <li>研修終了後（10/24以降）は自動で閉鎖されます</li>
@@ -67,7 +60,7 @@
     </section>
   </main>
 
-  <footer class="site-footer"><p>チャット｜10/20〜10/23 限定</p></footer>
+  <footer class="site-footer"><p>三班チャット｜10/20〜10/23 限定</p></footer>
   <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
   <script src="../src/js/default.js"></script>
   <script src="../src/data/locations.js"></script>
