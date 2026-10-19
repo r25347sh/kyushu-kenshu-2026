@@ -2,11 +2,12 @@
    kyushu-kenshu-2026 — Radial Menu + FAB + Hamburger
    アニメーション強化版 / クラシックテーマ可読性対応
    座標: #kk-ui-portal 内 absolute
+   半径・項目サイズ拡大（タップしやすさ）
    ========================================================= */
 
 :root {
   --rm-font: 'Noto Sans JP', system-ui, sans-serif;
-  --rm-item-size: 58px;
+  --rm-item-size: 64px;
   --rm-ease: cubic-bezier(0.34, 1.56, 0.64, 1);
   --rm-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --rm-ease-soft: cubic-bezier(0.4, 0, 0.2, 1);
@@ -55,7 +56,7 @@ html[data-color-scheme="classic"] {
 
 @media (min-width: 481px) {
   :root {
-    --rm-item-size: 64px;
+    --rm-item-size: 70px;
     --fab-size: 56px;
     --fab-gap: 1rem;
   }
@@ -134,15 +135,15 @@ html[data-color-scheme="classic"] {
 /* 戻るコア */
 .rm-core-btn {
   position: absolute;
-  width: 48px;
-  height: 48px;
-  margin-top: -24px;
-  margin-left: -24px;
+  width: 52px;
+  height: 52px;
+  margin-top: -26px;
+  margin-left: -26px;
   border-radius: 50%;
   border: 2px solid color-mix(in srgb, var(--rm-gold) 75%, transparent);
   background: var(--rm-surface);
   color: var(--rm-gold);
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 700;
   cursor: pointer;
   display: flex;
@@ -163,11 +164,11 @@ html[data-color-scheme="classic"] {
 }
 @media (min-width: 481px) {
   .rm-core-btn {
-    width: 52px;
-    height: 52px;
-    margin-top: -26px;
-    margin-left: -26px;
-    font-size: 18px;
+    width: 56px;
+    height: 56px;
+    margin-top: -28px;
+    margin-left: -28px;
+    font-size: 19px;
   }
 }
 .rm-core-btn.visible {
@@ -206,7 +207,7 @@ html[data-color-scheme="classic"] {
   border: 2px solid color-mix(in srgb, var(--rm-gold) 60%, transparent);
   background: var(--rm-surface-2);
   color: var(--rm-ink);
-  font-size: 20px;
+  font-size: 22px;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -231,7 +232,7 @@ html[data-color-scheme="classic"] {
   will-change: transform, opacity;
 }
 @media (min-width: 481px) {
-  .rm-item { font-size: 24px; }
+  .rm-item { font-size: 26px; }
 }
 
 .radial-menu-wrapper.active .rm-item.rendered {
@@ -302,7 +303,7 @@ html[data-color-scheme="classic"] {
 .rm-item::after {
   content: attr(data-label);
   position: absolute;
-  bottom: -38px;
+  bottom: -40px;
   left: 50%;
   transform: translateX(-50%) translateY(8px) scale(0.8);
   background: var(--rm-label-bg);
@@ -330,7 +331,7 @@ html[data-color-scheme="classic"] {
   .rm-item::after {
     font-size: 12px;
     padding: 6px 12px;
-    bottom: -42px;
+    bottom: -44px;
     max-width: 10em;
   }
 }
