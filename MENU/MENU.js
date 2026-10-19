@@ -1,6 +1,7 @@
 /**
  * kyushu-kenshu-2026 Radial Menu + Hamburger FAB
  * 改善: チャット追加 / Day4スポット拡充 / ラベル安定 / キーボード操作
+ * 半径拡大: タップしやすさ向上（2026-10-20）
  */
 (function () {
   'use strict';
@@ -109,6 +110,7 @@
     };
   }
 
+  /** 半径を以前より約25〜30%拡大してタップしやすく */
   function shellConfig(itemCount) {
     var vp = viewport();
     var w = vp.w;
@@ -116,25 +118,25 @@
     var n = itemCount || 8;
     var maxR;
     if (w < 380) {
-      maxR = Math.min(118, Math.floor(Math.min(w, h) * 0.34));
+      maxR = Math.min(148, Math.floor(Math.min(w, h) * 0.40));
       return {
         caps: [Math.min(n, 5), 8, 12],
-        radii: [Math.round(maxR * 0.58), maxR, Math.round(maxR * 1.20)],
-        margin: maxR + 48
+        radii: [Math.round(maxR * 0.60), maxR, Math.round(maxR * 1.22)],
+        margin: maxR + 56
       };
     }
     if (w < 480) {
-      maxR = Math.min(135, Math.floor(Math.min(w, h) * 0.36));
+      maxR = Math.min(168, Math.floor(Math.min(w, h) * 0.42));
       return {
         caps: [Math.min(n, 6), 9, 12],
-        radii: [Math.round(maxR * 0.58), maxR, Math.round(maxR * 1.22)],
-        margin: maxR + 52
+        radii: [Math.round(maxR * 0.60), maxR, Math.round(maxR * 1.24)],
+        margin: maxR + 60
       };
     }
     if (w < 720) {
-      return { caps: [6, 9, 13], radii: [115, 170, 220], margin: 175 };
+      return { caps: [6, 9, 13], radii: [145, 210, 270], margin: 215 };
     }
-    return { caps: [6, 10, 14], radii: [130, 200, 260], margin: 190 };
+    return { caps: [6, 10, 14], radii: [160, 245, 315], margin: 240 };
   }
 
   function navigateWithDelay(href) {
@@ -273,7 +275,7 @@
     var vp = viewport();
     var cfg = shellConfig(itemCount);
     var maxR = cfg.radii[Math.min(1, cfg.radii.length - 1)] || cfg.radii[0];
-    var labelPad = 42;
+    var labelPad = 48;
     var m = maxR + labelPad;
     var cx = typeof clientX === 'number' ? clientX : vp.w / 2;
     var cy = typeof clientY === 'number' ? clientY : vp.h / 2;
@@ -564,7 +566,6 @@
     open: openMenu,
     close: closeMenu,
     openHamburger: openHamburger,
-    closeHamburger: closeHamburger,
-    clearTextSelection: clearTextSelection
+    closeHamburger: closeHamburger
   };
 })();
